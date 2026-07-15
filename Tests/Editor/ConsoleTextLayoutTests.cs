@@ -130,5 +130,21 @@ namespace UnityNovelReader.Editor.Tests
                 UnityEngine.Object.DestroyImmediate(muted);
             }
         }
+
+        [Test]
+        public void ConvertConsoleMouseToContent_RemovesViewportOriginAndAddsScroll()
+        {
+            var viewport = new UnityEngine.Rect(250f, 40f, 700f, 500f);
+            var windowMouse = new UnityEngine.Vector2(310f, 135f);
+            var scroll = new UnityEngine.Vector2(0f, 80f);
+
+            UnityEngine.Vector2 contentMouse = NovelReaderWindow.ConvertConsoleMouseToContent(
+                windowMouse,
+                viewport,
+                scroll);
+
+            Assert.That(contentMouse.x, Is.EqualTo(60f));
+            Assert.That(contentMouse.y, Is.EqualTo(175f));
+        }
     }
 }

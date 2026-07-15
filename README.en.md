@@ -15,6 +15,7 @@ The default Console-style mode provides the following behavior:
 - The tab title/icon, toolbar, alternating rows, severity icons, search field, and right-side counters use a layout similar to Unity's Console.
 - `Open TXT`, `Prev`, `Next`, `Mark`, and `Editor ▼` provide file, navigation, bookmark, panel, and settings actions.
 - `Clear` hides or restores the current text without changing the page, progress, bookmarks, or scroll position.
+- Right-click any Log row to add a temporary blue position marker. Right-clicking another row moves it, while paging, chapter jumps, or switching books clears it without saving anything.
 - Chapter titles use Error, paragraph starts use Log/Info, and continuation rows use Warning. The severity switches mute or restore both text and matching icons; they do not filter text.
 - Rows split or grow with the window width so the complete text remains visible.
 - The chapter/bookmark sidebar starts collapsed and can be expanded when needed.

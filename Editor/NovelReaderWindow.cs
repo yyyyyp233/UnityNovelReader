@@ -30,6 +30,7 @@ namespace UnityNovelReader.Editor
             internal string Header;
             internal string Text;
             internal string SourceText;
+            internal int SourceOffset;
             internal ConsoleRowSeverity Severity;
             internal float Top;
             internal float Height;
@@ -69,6 +70,7 @@ namespace UnityNovelReader.Editor
         private int consoleInfoCount;
         private int consoleWarningCount;
         private int consoleErrorCount;
+        private int markedConsoleSourceOffset = -1;
         private GUIStyle readerStyle;
         private GUIStyle chapterRowStyle;
         private GUIStyle selectedChapterRowStyle;
@@ -313,9 +315,19 @@ namespace UnityNovelReader.Editor
 
         private void UpdateCurrentPage()
         {
-            currentPage = document != null && activeBook != null
+            PageSlice nextPage = document != null && activeBook != null
                 ? NovelPaginator.GetPage(document.Content, activeBook.charOffset, state.preferences.charactersPerPage)
                 : null;
+            if (markedConsoleSourceOffset >= 0
+                && (currentPage == null
+                    || nextPage == null
+                    || currentPage.StartOffset != nextPage.StartOffset
+                    || currentPage.EndOffset != nextPage.EndOffset))
+            {
+                markedConsoleSourceOffset = -1;
+            }
+
+            currentPage = nextPage;
         }
 
         private void DrawToolbar()
@@ -705,6 +717,14 @@ namespace UnityNovelReader.Editor
             float textWidth = Math.Max(40f, contentWidth - ConsoleIconGutterWidth - 8f);
             EnsureConsoleLayout(textWidth);
             Rect contentRect = new Rect(0f, 0f, contentWidth, Math.Max(viewport.height, consoleRowsHeight));
+            Event currentEvent = Event.current;
+            bool canMarkRow = currentEvent != null
+                && currentEvent.type == EventType.MouseDown
+                && currentEvent.button == 1
+                && viewport.Contains(currentEvent.mousePosition);
+            Vector2 contentMousePosition = currentEvent != null
+                ? ConvertConsoleMouseToContent(currentEvent.mousePosition, viewport, readerScroll)
+                : Vector2.zero;
             readerScroll = GUI.BeginScrollView(viewport, readerScroll, contentRect);
             for (int i = 0; i < consoleRows.Count; i++)
             {
@@ -716,7 +736,11 @@ namespace UnityNovelReader.Editor
                 }
 
                 Rect rowRect = new Rect(0f, row.Top, contentWidth, row.Height);
-                EditorGUI.DrawRect(rowRect, GetConsoleRowColor(i));
+                HandleConsoleRowMarker(rowRect, row.SourceOffset, canMarkRow, contentMousePosition);
+                bool isMarked = row.SourceOffset == markedConsoleSourceOffset;
+                EditorGUI.DrawRect(
+                    rowRect,
+                    isMarked ? GetConsoleMarkedRowColor() : GetConsoleRowColor(i));
                 DrawConsoleIcon(
                     new Rect(
                         4f,
@@ -732,7 +756,8 @@ namespace UnityNovelReader.Editor
                             row.Top + ConsoleRowVerticalPadding,
                             textWidth,
                             row.HeaderHeight),
-                        row.Header);
+                        row.Header,
+                        isMarked);
                 }
 
                 DrawConsoleText(
@@ -742,7 +767,8 @@ namespace UnityNovelReader.Editor
                         textWidth,
                         row.TextHeight),
                     row.Text,
-                    row.Severity);
+                    row.Severity,
+                    isMarked);
             }
 
             GUI.EndScrollView();
@@ -797,6 +823,7 @@ namespace UnityNovelReader.Editor
                         : null,
                     Text = segment.Text,
                     SourceText = segment.SourceText,
+                    SourceOffset = currentPage.StartOffset + segment.Start,
                     Severity = severity,
                     Top = consoleRowsHeight,
                     Height = Math.Max(
@@ -817,6 +844,30 @@ namespace UnityNovelReader.Editor
             cachedConsoleFontSize = state.preferences.consoleFontSize;
             cachedConsoleWidth = textWidth;
             Repaint();
+        }
+
+        private void HandleConsoleRowMarker(
+            Rect rowRect,
+            int sourceOffset,
+            bool canMarkRow,
+            Vector2 contentMousePosition)
+        {
+            if (!canMarkRow || !rowRect.Contains(contentMousePosition))
+            {
+                return;
+            }
+
+            markedConsoleSourceOffset = sourceOffset;
+            Event.current.Use();
+            Repaint();
+        }
+
+        internal static Vector2 ConvertConsoleMouseToContent(
+            Vector2 windowMousePosition,
+            Rect viewport,
+            Vector2 scrollPosition)
+        {
+            return windowMousePosition - viewport.position + scrollPosition;
         }
 
         private float GetConsoleOneLineHeight(float textWidth)
@@ -1079,20 +1130,24 @@ namespace UnityNovelReader.Editor
             texture = null;
         }
 
-        private void DrawConsoleHeader(Rect rect, string text)
+        private void DrawConsoleHeader(Rect rect, string text, bool isMarked = false)
         {
             Color previousColor = consoleHeaderStyle.normal.textColor;
-            consoleHeaderStyle.normal.textColor = EditorGUIUtility.isProSkin
-                ? new Color(0.76f, 0.76f, 0.76f)
-                : new Color(0.20f, 0.20f, 0.20f);
+            consoleHeaderStyle.normal.textColor = isMarked
+                ? (EditorGUIUtility.isProSkin ? new Color(0.90f, 0.90f, 0.90f) : Color.white)
+                : (EditorGUIUtility.isProSkin
+                    ? new Color(0.76f, 0.76f, 0.76f)
+                    : new Color(0.20f, 0.20f, 0.20f));
             GUI.Label(rect, text, consoleHeaderStyle);
             consoleHeaderStyle.normal.textColor = previousColor;
         }
 
-        private void DrawConsoleText(Rect rect, string text, ConsoleRowSeverity severity)
+        private void DrawConsoleText(Rect rect, string text, ConsoleRowSeverity severity, bool isMarked = false)
         {
             Color previousColor = consoleTextStyle.normal.textColor;
-            consoleTextStyle.normal.textColor = GetConsoleTextColor(severity);
+            consoleTextStyle.normal.textColor = isMarked
+                ? (EditorGUIUtility.isProSkin ? new Color(0.90f, 0.90f, 0.90f) : Color.white)
+                : GetConsoleTextColor(severity);
             GUI.Label(rect, text, consoleTextStyle);
             consoleTextStyle.normal.textColor = previousColor;
         }
@@ -1136,7 +1191,7 @@ namespace UnityNovelReader.Editor
         private static Color GetConsoleBackgroundColor()
         {
             return EditorGUIUtility.isProSkin
-                ? new Color(0.145f, 0.145f, 0.145f)
+                ? new Color(56f / 255f, 56f / 255f, 56f / 255f)
                 : new Color(0.84f, 0.84f, 0.84f);
         }
 
@@ -1152,6 +1207,13 @@ namespace UnityNovelReader.Editor
             return rowIndex % 2 == 0
                 ? new Color(0.91f, 0.91f, 0.91f)
                 : new Color(0.86f, 0.86f, 0.86f);
+        }
+
+        private static Color GetConsoleMarkedRowColor()
+        {
+            return EditorGUIUtility.isProSkin
+                ? new Color(44f / 255f, 93f / 255f, 135f / 255f)
+                : new Color(0.42f, 0.65f, 0.84f);
         }
 
         private void InvalidateConsoleLayout()
@@ -1777,6 +1839,7 @@ namespace UnityNovelReader.Editor
                 statusMessage = string.Empty;
                 appliedChapterFilter = null;
                 consoleBufferCleared = false;
+                markedConsoleSourceOffset = -1;
                 readerScroll = Vector2.zero;
                 InvalidateConsoleLayout();
                 SaveState();
@@ -1903,6 +1966,7 @@ namespace UnityNovelReader.Editor
             activeBook.charOffset = Math.Max(0, Math.Min(document.Content.Length, offset));
             activeBook.lastOpenedUtcTicks = DateTime.UtcNow.Ticks;
             consoleBufferCleared = false;
+            markedConsoleSourceOffset = -1;
             readerScroll = Vector2.zero;
             InvalidateConsoleLayout();
             SaveState();
