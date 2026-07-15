@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a focused reader or Unity Editor workflow improvement.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the reader workflow that is currently difficult.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Project isolation
+      options:
+        - label: This proposal can remain Editor-only and keep user data outside Unity projects.
+          required: true
