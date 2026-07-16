@@ -2,7 +2,9 @@
 
 [简体中文](README.md)
 
-Unity Novel Reader is a local text reader that runs inside the Unity Editor. Its default reading mode uses a Console-style layout, including a Console tab title, toolbar, log rows, severity icons, search field, and counters.
+> Positioning: a small Unity Editor tool for discreetly reading local novels during work breaks. Console disguise and quick hiding are its main purpose; it is not intended to be a general-purpose e-book reader.
+
+Unity Novel Reader runs inside the Unity Editor and reads local text files directly. Its default reading mode uses a Console-style layout, including a Console tab title, toolbar, log rows, severity icons, search field, and counters.
 
 The reader supports paging, chapters, bookmarks, progress persistence, and configurable shortcuts. A disguise key switches between novel text and matching log details in Console mode; a boss key hides or restores the reader and focuses a Scene, Console, Profiler, Animator, or Project window.
 

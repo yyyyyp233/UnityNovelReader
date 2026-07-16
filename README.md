@@ -2,7 +2,9 @@
 
 [English](README.en.md)
 
-Unity Novel Reader 是一个运行在 Unity Editor 内的本地文本阅读工具。默认界面采用 Console 伪装模式，包括 Console 标签标题、工具栏、Log 行、级别图标、搜索框和右侧计数器。
+> 项目定位：给 Unity 开发者在工作间隙摸鱼看本地小说用的轻量小工具。Console 伪装和快捷隐藏是主要功能，不以通用电子书阅读器为目标。
+
+Unity Novel Reader 运行在 Unity Editor 内，直接读取本地文本。默认界面采用 Console 伪装模式，包括 Console 标签标题、工具栏、Log 行、级别图标、搜索框和右侧计数器。
 
 阅读器支持分页、章节、书签、进度保存和快捷键设置。伪装键可以在 Console 模式下切换小说正文与配套日志详情；老板键可以隐藏或恢复阅读器，并切换到 `Scene`、`Console`、`Profiler`、`Animator` 或 `Project` 窗口。
 
