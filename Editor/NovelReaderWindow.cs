@@ -43,7 +43,7 @@ namespace UnityNovelReader.Editor
         private NovelDocument document;
         private BookState activeBook;
         private PageSlice currentPage;
-        private Vector2 readerScroll;
+        [SerializeField] private Vector2 readerScroll;
         private Vector2 chapterScroll;
         private Vector2 bookmarkScroll;
         private Vector2 settingsScroll;
@@ -1838,10 +1838,10 @@ namespace UnityNovelReader.Editor
                 return;
             }
 
-            TryLoadBook(book.filePath, false);
+            TryLoadBook(book.filePath, false, false);
         }
 
-        private void TryLoadBook(string path, bool showDialogOnError)
+        private void TryLoadBook(string path, bool showDialogOnError, bool resetScroll = true)
         {
             try
             {
@@ -1870,7 +1870,7 @@ namespace UnityNovelReader.Editor
                 appliedChapterFilter = null;
                 consoleBufferCleared = false;
                 markedConsoleSourceOffset = -1;
-                readerScroll = Vector2.zero;
+                readerScroll = ResolveReaderScrollAfterBookLoad(readerScroll, resetScroll);
                 InvalidateConsoleLayout();
                 SaveState();
                 Repaint();
@@ -1883,6 +1883,11 @@ namespace UnityNovelReader.Editor
                     EditorUtility.DisplayDialog("Unity Novel Reader", exception.Message, "OK");
                 }
             }
+        }
+
+        internal static Vector2 ResolveReaderScrollAfterBookLoad(Vector2 currentScroll, bool resetScroll)
+        {
+            return resetScroll ? Vector2.zero : currentScroll;
         }
 
         private void ShowLibraryMenu()

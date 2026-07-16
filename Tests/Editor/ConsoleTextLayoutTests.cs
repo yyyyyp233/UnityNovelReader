@@ -158,5 +158,29 @@ namespace UnityNovelReader.Editor.Tests
 
             Assert.That(NovelReaderWindow.HasValidConsoleIcon(content), Is.False);
         }
+
+        [Test]
+        public void ResolveReaderScrollAfterBookLoad_PreservesAutomaticRestorePosition()
+        {
+            var currentScroll = new UnityEngine.Vector2(0f, 428f);
+
+            Assert.That(
+                NovelReaderWindow.ResolveReaderScrollAfterBookLoad(currentScroll, false),
+                Is.EqualTo(currentScroll));
+            Assert.That(
+                NovelReaderWindow.ResolveReaderScrollAfterBookLoad(currentScroll, true),
+                Is.EqualTo(UnityEngine.Vector2.zero));
+        }
+
+        [Test]
+        public void ReaderScroll_IsSerializedAcrossDomainReload()
+        {
+            System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(
+                "readerScroll",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(field, Is.Not.Null);
+            Assert.That(field.IsDefined(typeof(UnityEngine.SerializeField), false), Is.True);
+        }
     }
 }
