@@ -25,40 +25,19 @@ namespace UnityNovelReader.Editor
             "AssetDatabase refresh completed.",
             "Scene view repaint completed.",
             "Assembly reload completed.",
-            "Project database synchronized.",
-            "Inspector selection updated.",
-            "Hierarchy window repaint completed.",
-            "Package Manager status refreshed.",
-            "Editor preferences loaded.",
-            "Scene visibility state synchronized."
+            "Project database synchronized."
         };
 
         private static readonly string[] ConsoleWarningHeaderMessages =
         {
             "Asset import completed with warnings.",
             "Editor state changed during update.",
-            "Serialized object contains pending changes.",
-            "Import worker reported recoverable issues.",
-            "Script reload completed with warnings.",
-            "Scene validation returned non-blocking issues.",
-            "Package cache verification completed with warnings.",
-            "Inspector repaint requested during update.",
-            "Asset metadata requires validation.",
-            "Editor callback completed with warnings."
+            "Serialized object contains pending changes."
         };
 
         private static readonly string[] ConsoleErrorHeaderMessages =
         {
-            "Editor task completed with errors.",
-            "Failed to process editor callback.",
-            "Asset pipeline operation failed.",
-            "Exception caught while invoking editor task.",
-            "Could not complete the requested import.",
-            "Serialized data validation failed.",
-            "Editor window callback returned an error.",
-            "Refresh operation terminated unexpectedly.",
-            "Project database update failed.",
-            "Assembly reload reported an error."
+            "Editor task completed with errors."
         };
 
         private enum ConsoleRowSeverity

@@ -193,6 +193,19 @@ namespace UnityNovelReader.Editor.Tests
             Assert.That(first, Is.InRange(0, 9));
         }
 
+        [TestCase("ConsoleInfoHeaderMessages", 5)]
+        [TestCase("ConsoleWarningHeaderMessages", 3)]
+        [TestCase("ConsoleErrorHeaderMessages", 1)]
+        public void SyntheticHeaderMessagePools_UseConfiguredRatio(string fieldName, int expectedCount)
+        {
+            System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(
+                fieldName,
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(field, Is.Not.Null);
+            Assert.That((string[])field.GetValue(null), Has.Length.EqualTo(expectedCount));
+        }
+
         [Test]
         public void GetSyntheticHeaderTimestamp_UsesStableSourceOffset()
         {
