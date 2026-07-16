@@ -163,6 +163,8 @@ namespace UnityNovelReader.Editor
         [SerializeField] private int syntheticHeaderSeed;
         [SerializeField] private bool shortcutHidden;
         [SerializeField] private bool consoleDetailsDisguised;
+        [SerializeField] private Vector2 strongDisguiseScroll;
+        private bool pointerInsideWindow;
         private Vector2 chapterScroll;
         private Vector2 bookmarkScroll;
         private Vector2 settingsScroll;
@@ -278,7 +280,12 @@ namespace UnityNovelReader.Editor
                 return;
             }
 
-            if (!existing.UsesConsoleAppearance())
+            if (existing.IsStrongDisguiseEnabled())
+            {
+                return;
+            }
+
+            if (!existing.IsConsoleReaderSelected())
             {
                 ToggleWindow(true);
                 return;
@@ -369,12 +376,17 @@ namespace UnityNovelReader.Editor
             ResetConsoleIconReferences();
             stateStore = new ReaderStateStore();
             state = stateStore.Load();
+            wantsMouseMove = true;
+            pointerInsideWindow = Application.isFocused && mouseOverWindow == this;
+            EditorApplication.update -= UpdateStrongDisguiseHover;
+            EditorApplication.update += UpdateStrongDisguiseHover;
             UpdateWindowTitle();
             TryRestoreLastBook();
         }
 
         private void OnDisable()
         {
+            EditorApplication.update -= UpdateStrongDisguiseHover;
             ReleaseMutedConsoleIcons();
             ResetConsoleIconReferences();
             SaveState();
@@ -387,12 +399,13 @@ namespace UnityNovelReader.Editor
 
         private void OnGUI()
         {
+            HandleStrongDisguiseMouseEvent(Event.current);
             EnsureStyles();
             HandleReaderKeys(Event.current);
             UpdateCurrentPage();
             DrawToolbar();
 
-            if (mainPage == 1)
+            if (mainPage == 1 && !IsStrongDisguiseActive())
             {
                 DrawSettingsPage();
                 return;
@@ -527,9 +540,102 @@ namespace UnityNovelReader.Editor
 
         private bool UsesConsoleAppearance()
         {
+            return IsStrongDisguiseActive() || IsConsoleReaderSelected();
+        }
+
+        private bool IsConsoleReaderSelected()
+        {
             return state == null
                 || state.preferences == null
                 || state.preferences.appearance == ReaderAppearance.Console;
+        }
+
+        private bool IsStrongDisguiseEnabled()
+        {
+            return state != null
+                && state.preferences != null
+                && state.preferences.strongHoverDisguise;
+        }
+
+        private bool IsStrongDisguiseActive()
+        {
+            return ShouldActivateStrongDisguise(IsStrongDisguiseEnabled(), pointerInsideWindow);
+        }
+
+        internal static bool ShouldActivateStrongDisguise(bool enabled, bool pointerInside)
+        {
+            return enabled && !pointerInside;
+        }
+
+        private bool ShouldSimulateConsoleHeaders()
+        {
+            return IsStrongDisguiseActive()
+                || (state != null
+                    && state.preferences != null
+                    && state.preferences.simulateConsoleHeaders);
+        }
+
+        private bool ShouldDisplayConsoleDetails()
+        {
+            return ShouldDisplayConsoleDetails(
+                IsStrongDisguiseEnabled(),
+                IsStrongDisguiseActive(),
+                consoleDetailsDisguised);
+        }
+
+        internal static bool ShouldDisplayConsoleDetails(
+            bool strongDisguiseEnabled,
+            bool strongDisguiseActive,
+            bool manualDetailsDisguised)
+        {
+            return strongDisguiseEnabled
+                ? strongDisguiseActive
+                : manualDetailsDisguised;
+        }
+
+        private bool IsConsoleBufferClearedForRendering()
+        {
+            return consoleBufferCleared && !IsStrongDisguiseActive();
+        }
+
+        private void HandleStrongDisguiseMouseEvent(Event currentEvent)
+        {
+            if (currentEvent == null)
+            {
+                return;
+            }
+
+            if (currentEvent.type == EventType.MouseEnterWindow)
+            {
+                SetPointerInsideWindow(Application.isFocused);
+            }
+            else if (currentEvent.type == EventType.MouseLeaveWindow)
+            {
+                SetPointerInsideWindow(false);
+            }
+        }
+
+        private void UpdateStrongDisguiseHover()
+        {
+            SetPointerInsideWindow(Application.isFocused && mouseOverWindow == this);
+        }
+
+        private void SetPointerInsideWindow(bool inside)
+        {
+            if (pointerInsideWindow == inside)
+            {
+                return;
+            }
+
+            pointerInsideWindow = inside;
+            if (!IsStrongDisguiseEnabled())
+            {
+                return;
+            }
+
+            InvalidateConsoleLayout();
+            UpdateWindowTitle();
+            Repaint();
         }
 
         private void UpdateWindowTitle()
@@ -624,6 +730,7 @@ namespace UnityNovelReader.Editor
 
         private void DrawConsoleToolbar()
         {
+            bool strongDisguiseActive = IsStrongDisguiseActive();
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
             if (GUILayout.Button(new GUIContent("Clear", "Toggle the visible reader buffer without changing progress"), EditorStyles.toolbarDropDown, GUILayout.Width(54f)))
             {
@@ -663,8 +770,10 @@ namespace UnityNovelReader.Editor
             if (position.width >= 560f)
             {
                 float searchWidth = Mathf.Clamp(position.width * 0.20f, 72f, 240f);
-                string nextFilter = EditorGUILayout.TextField(chapterFilter, EditorStyles.toolbarSearchField, GUILayout.Width(searchWidth));
-                if (!string.Equals(nextFilter, chapterFilter, StringComparison.Ordinal))
+                string visibleFilter = strongDisguiseActive ? string.Empty : chapterFilter;
+                string nextFilter = EditorGUILayout.TextField(visibleFilter, EditorStyles.toolbarSearchField, GUILayout.Width(searchWidth));
+                if (!strongDisguiseActive
+                    && !string.Equals(nextFilter, chapterFilter, StringComparison.Ordinal))
                 {
                     chapterFilter = nextFilter;
                     appliedChapterFilter = null;
@@ -842,15 +951,20 @@ namespace UnityNovelReader.Editor
                 GUILayout.ExpandWidth(true),
                 GUILayout.ExpandHeight(true));
             EditorGUI.DrawRect(area, GetConsoleBackgroundColor());
-            if (string.IsNullOrEmpty(statusMessage))
+            bool strongDisguiseActive = IsStrongDisguiseActive();
+            if (string.IsNullOrEmpty(statusMessage) && !strongDisguiseActive)
             {
                 return;
             }
 
             float textWidth = Math.Max(40f, area.width - ConsoleIconGutterWidth - 12f);
-            bool simulateHeaders = state.preferences.simulateConsoleHeaders;
+            bool simulateHeaders = ShouldSimulateConsoleHeaders();
+            DateTime syntheticHeaderAnchorTime = GetSyntheticHeaderAnchorTime();
+            string displayStatus = strongDisguiseActive
+                ? BuildConsoleDetail(ConsoleRowSeverity.Error, 0, syntheticHeaderSeed)
+                : statusMessage;
             float headerHeight = simulateHeaders ? GetConsoleOneLineHeight(textWidth) : 0f;
-            float textHeight = Math.Max(20f, consoleTextStyle.CalcHeight(new GUIContent(statusMessage), textWidth));
+            float textHeight = Math.Max(20f, consoleTextStyle.CalcHeight(new GUIContent(displayStatus), textWidth));
             float rowHeight = Math.Max(
                 ConsoleMinimumRowHeight,
                 (ConsoleRowVerticalPadding * 2f) + headerHeight + textHeight);
@@ -872,7 +986,7 @@ namespace UnityNovelReader.Editor
                         textWidth,
                         headerHeight),
                     BuildConsoleHeader(
-                        GetSyntheticHeaderAnchorTime(),
+                        syntheticHeaderAnchorTime,
                         ConsoleRowSeverity.Error,
                         0,
                         syntheticHeaderSeed),
@@ -885,14 +999,14 @@ namespace UnityNovelReader.Editor
                     row.y + ConsoleRowVerticalPadding + headerHeight,
                     textWidth,
                     textHeight),
-                statusMessage,
+                displayStatus,
                 ConsoleRowSeverity.Error);
         }
 
         private void DrawConsoleReader()
         {
             EditorGUILayout.BeginHorizontal();
-            if (state.preferences.showSidebar)
+            if (!IsStrongDisguiseActive() && state.preferences.showSidebar)
             {
                 DrawConsoleSidebar();
             }
@@ -933,6 +1047,8 @@ namespace UnityNovelReader.Editor
 
         private void DrawConsoleReadingPane()
         {
+            bool strongDisguiseActive = IsStrongDisguiseActive();
+            Vector2 activeScroll = strongDisguiseActive ? strongDisguiseScroll : readerScroll;
             EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             Rect viewport = GUILayoutUtility.GetRect(
                 40f,
@@ -942,7 +1058,9 @@ namespace UnityNovelReader.Editor
                 GUILayout.ExpandWidth(true),
                 GUILayout.ExpandHeight(true));
             EditorGUI.DrawRect(viewport, GetConsoleBackgroundColor());
-            if (consoleBufferCleared || currentPage == null || string.IsNullOrEmpty(currentPage.Text))
+            if (IsConsoleBufferClearedForRendering()
+                || currentPage == null
+                || string.IsNullOrEmpty(currentPage.Text))
             {
                 EditorGUILayout.EndVertical();
                 return;
@@ -958,14 +1076,14 @@ namespace UnityNovelReader.Editor
                 && currentEvent.button == 1
                 && viewport.Contains(currentEvent.mousePosition);
             Vector2 contentMousePosition = currentEvent != null
-                ? ConvertConsoleMouseToContent(currentEvent.mousePosition, viewport, readerScroll)
+                ? ConvertConsoleMouseToContent(currentEvent.mousePosition, viewport, activeScroll)
                 : Vector2.zero;
-            readerScroll = GUI.BeginScrollView(viewport, readerScroll, contentRect);
+            activeScroll = GUI.BeginScrollView(viewport, activeScroll, contentRect);
             for (int i = 0; i < consoleRows.Count; i++)
             {
                 ConsoleRenderRow row = consoleRows[i];
-                if (row.Top + row.Height < readerScroll.y - ConsoleMinimumRowHeight
-                    || row.Top > readerScroll.y + viewport.height + ConsoleMinimumRowHeight)
+                if (row.Top + row.Height < activeScroll.y - ConsoleMinimumRowHeight
+                    || row.Top > activeScroll.y + viewport.height + ConsoleMinimumRowHeight)
                 {
                     continue;
                 }
@@ -1008,12 +1126,21 @@ namespace UnityNovelReader.Editor
             }
 
             GUI.EndScrollView();
+            if (strongDisguiseActive)
+            {
+                strongDisguiseScroll = activeScroll;
+            }
+            else
+            {
+                readerScroll = activeScroll;
+            }
+
             EditorGUILayout.EndVertical();
         }
 
         private void EnsureConsoleLayout(float textWidth)
         {
-            if (currentPage == null || consoleBufferCleared)
+            if (currentPage == null || IsConsoleBufferClearedForRendering())
             {
                 return;
             }
@@ -1033,7 +1160,8 @@ namespace UnityNovelReader.Editor
             consoleErrorCount = 0;
 
             float oneLineHeight = GetConsoleOneLineHeight(textWidth);
-            bool simulateHeaders = state.preferences.simulateConsoleHeaders;
+            bool simulateHeaders = ShouldSimulateConsoleHeaders();
+            bool displayConsoleDetails = ShouldDisplayConsoleDetails();
             float preferredTextHeight = simulateHeaders
                 ? oneLineHeight + 0.5f
                 : (oneLineHeight * 2f) + 1f;
@@ -1047,7 +1175,7 @@ namespace UnityNovelReader.Editor
                 ConsoleTextSegment segment = segments[i];
                 int absoluteOffset = currentPage.StartOffset + segment.Start;
                 ConsoleRowSeverity severity = GetConsoleSeverity(segment);
-                string displayText = consoleDetailsDisguised
+                string displayText = displayConsoleDetails
                     ? BuildConsoleDetail(severity, absoluteOffset, syntheticHeaderSeed)
                     : segment.Text;
                 float measuredHeight = Math.Max(
@@ -1706,6 +1834,22 @@ namespace UnityNovelReader.Editor
             GUILayout.Space(16f);
             GUILayout.Label("Disguise strategy", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            bool nextStrongHoverDisguise = EditorGUILayout.Toggle(
+                new GUIContent(
+                    "Strong hover disguise",
+                    "Only show novel content while the pointer is over this window"),
+                state.preferences.strongHoverDisguise);
+            if (nextStrongHoverDisguise != state.preferences.strongHoverDisguise)
+            {
+                SetStrongHoverDisguise(nextStrongHoverDisguise);
+            }
+
+            EditorGUILayout.HelpBox(
+                state.preferences.strongHoverDisguise
+                    ? "Outside the window, every reader skin and Settings are replaced by a full Console view with synthetic headers and matching log details. Inside the window, the selected reader and original novel return."
+                    : "Enable to replace the entire window with a complete Console disguise whenever the pointer leaves it.",
+                MessageType.None);
+
             DecoyWindowTarget nextTarget = (DecoyWindowTarget)EditorGUILayout.EnumPopup(
                 new GUIContent("Boss-key target", "Window focused or opened after the reader hides"),
                 state.preferences.decoyWindow);
@@ -1860,6 +2004,29 @@ namespace UnityNovelReader.Editor
             }
 
             state.preferences.decoyWindow = target;
+            SaveState();
+            Repaint();
+        }
+
+        private void SetStrongHoverDisguise(bool enabled)
+        {
+            if (state == null
+                || state.preferences == null
+                || state.preferences.strongHoverDisguise == enabled)
+            {
+                return;
+            }
+
+            state.preferences.strongHoverDisguise = enabled;
+            pointerInsideWindow = Application.isFocused && mouseOverWindow == this;
+            if (enabled)
+            {
+                consoleDetailsDisguised = false;
+                strongDisguiseScroll = Vector2.zero;
+            }
+
+            InvalidateConsoleLayout();
+            UpdateWindowTitle();
             SaveState();
             Repaint();
         }

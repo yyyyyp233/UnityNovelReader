@@ -44,7 +44,7 @@ namespace UnityNovelReader.Editor
     [Serializable]
     internal sealed class ReaderStateData
     {
-        internal const int CurrentSchemaVersion = 4;
+        internal const int CurrentSchemaVersion = 5;
 
         public int schemaVersion = CurrentSchemaVersion;
         public string lastBookId = string.Empty;
@@ -78,6 +78,11 @@ namespace UnityNovelReader.Editor
                 preferences.simulateConsoleHeaders = false;
             }
 
+            if (schemaVersion < 5)
+            {
+                preferences.strongHoverDisguise = false;
+            }
+
             schemaVersion = CurrentSchemaVersion;
 
             preferences.Normalize();
@@ -108,6 +113,7 @@ namespace UnityNovelReader.Editor
         public bool colorWarningRows = true;
         public bool colorErrorRows = true;
         public bool simulateConsoleHeaders;
+        public bool strongHoverDisguise;
         public ReaderAppearance appearance = ReaderAppearance.Console;
         public DecoyWindowTarget decoyWindow = DecoyWindowTarget.Console;
 

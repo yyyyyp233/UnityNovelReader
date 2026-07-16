@@ -21,6 +21,7 @@ The default Console-style mode provides the following behavior:
 - The chapter/bookmark sidebar starts collapsed and can be expanded when needed.
 - Timestamped synthetic log headers are optional and disabled by default.
 - The disguise key replaces novel text with log details paired one-to-one with the synthetic headers; triggering it again restores the text.
+- Optional strong hover disguise shows novel content only while the pointer is inside the reader; leaving the window or unfocusing Unity switches the entire window to a full Console disguise.
 
 This mode changes presentation only. Original text, whitespace, offsets, reading progress, and bookmarks remain intact.
 
@@ -36,6 +37,7 @@ This mode changes presentation only. Original text, whitespace, offsets, reading
 - Keeps the chapter/bookmark sidebar collapsed by default in Console mode, with explicit expand and collapse controls.
 - Offers a rebindable disguise key, boss key, and selectable Unity decoy windows.
 - Includes an in-window Settings page for shortcut bindings, reader appearance, synthetic headers, and disguise strategy.
+- Strong hover disguise applies to Console, Classic, and Settings, with a separate scroll position that does not affect reading position.
 - Keeps visible `Prev` and `Next` controls, a reversible `Clear`, and color toggles that never filter out text.
 - Contains Editor-only code and is excluded from player builds.
 
@@ -106,6 +108,8 @@ The toolbar search field searches chapter titles and automatically expands the c
 
 `Editor ▼ > Settings` switches the current reader window to its lightweight Settings page. Shortcut bindings, Console appearance, optional synthetic headers, and the boss-key target can all be changed there without opening another plugin window. Shortcut bindings are stored by Unity's user-level Shortcut Manager rather than in the project.
 
+`Strong hover disguise` is disabled by default. When enabled, the selected Reader or Settings appears while the pointer is inside the window. Leaving the window or unfocusing Unity replaces the title, toolbar, and content with Console presentation, forced synthetic headers, and matching log details. The disguise view does not expose the sidebar, chapter search text, `Clear` state, or normal reading scroll. The disguise key is temporarily ignored while this mode is enabled; the boss key keeps its existing behavior.
+
 | Action | Control or default shortcut |
 | --- | --- |
 | Open a local book | `Editor ▼ > Open TXT` |
@@ -121,7 +125,7 @@ The toolbar search field searches chapter titles and automatically expands the c
 
 Shortcuts can be changed directly on the reader's Settings page or in Unity's Shortcut Manager.
 
-Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. When the reader shares a dock area with other tabs, the boss key selects another tab without destroying the reader window, so restoring it keeps the original tab layout. In Console mode the disguise key changes text only and does not move the window; in Classic mode it behaves like the boss key. Console mode exposes `Editor ▼ > Classic Reader`; Classic mode keeps the same `Editor ▼` menu and exposes `Console Reader` for switching back. If the selected decoy cannot be opened, the reader falls back to `Scene`.
+Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. When the reader shares a dock area with other tabs, the boss key selects another tab without destroying the reader window, so restoring it keeps the original tab layout. With strong hover disguise disabled, the disguise key changes text only in Console mode and does not move the window; in Classic mode it behaves like the boss key. Console mode exposes `Editor ▼ > Classic Reader`; Classic mode keeps the same `Editor ▼` menu and exposes `Console Reader` for switching back. If the selected decoy cannot be opened, the reader falls back to `Scene`.
 
 ## Privacy and project isolation
 

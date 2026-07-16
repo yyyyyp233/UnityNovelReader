@@ -39,6 +39,7 @@ namespace UnityNovelReader.Editor.Tests
             state.preferences.appearance = ReaderAppearance.Classic;
             state.preferences.colorWarningRows = false;
             state.preferences.simulateConsoleHeaders = true;
+            state.preferences.strongHoverDisguise = true;
             state.preferences.decoyWindow = DecoyWindowTarget.Profiler;
             state.books.Add(new BookState
             {
@@ -62,6 +63,7 @@ namespace UnityNovelReader.Editor.Tests
             Assert.That(loaded.preferences.appearance, Is.EqualTo(ReaderAppearance.Classic));
             Assert.That(loaded.preferences.colorWarningRows, Is.False);
             Assert.That(loaded.preferences.simulateConsoleHeaders, Is.True);
+            Assert.That(loaded.preferences.strongHoverDisguise, Is.True);
             Assert.That(loaded.preferences.decoyWindow, Is.EqualTo(DecoyWindowTarget.Profiler));
             Assert.That(loaded.books.Count, Is.EqualTo(1));
             Assert.That(loaded.books[0].charOffset, Is.EqualTo(1234));
@@ -128,6 +130,21 @@ namespace UnityNovelReader.Editor.Tests
 
             Assert.That(loaded.schemaVersion, Is.EqualTo(ReaderStateData.CurrentSchemaVersion));
             Assert.That(loaded.preferences.simulateConsoleHeaders, Is.False);
+        }
+
+        [Test]
+        public void Load_SchemaFourStateDisablesStrongHoverDisguiseByDefault()
+        {
+            string path = Path.Combine(directory, "schema-four-state.json");
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(
+                path,
+                "{\"schemaVersion\":4,\"preferences\":{\"fontSize\":16,\"charactersPerPage\":900,\"appearance\":0}}");
+
+            ReaderStateData loaded = new ReaderStateStore(path).Load();
+
+            Assert.That(loaded.schemaVersion, Is.EqualTo(ReaderStateData.CurrentSchemaVersion));
+            Assert.That(loaded.preferences.strongHoverDisguise, Is.False);
         }
 
         [TestCase(DecoyWindowTarget.Scene, "Window/General/Scene")]

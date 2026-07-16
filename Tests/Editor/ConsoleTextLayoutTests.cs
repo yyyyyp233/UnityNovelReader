@@ -283,6 +283,49 @@ namespace UnityNovelReader.Editor.Tests
             Assert.That(field.IsDefined(typeof(UnityEngine.SerializeField), false), Is.True);
         }
 
+        [TestCase(false, false, false)]
+        [TestCase(false, true, false)]
+        [TestCase(true, true, false)]
+        [TestCase(true, false, true)]
+        public void ShouldActivateStrongDisguise_RequiresEnabledAndPointerOutside(
+            bool enabled,
+            bool pointerInside,
+            bool expected)
+        {
+            Assert.That(
+                NovelReaderWindow.ShouldActivateStrongDisguise(enabled, pointerInside),
+                Is.EqualTo(expected));
+        }
+
+        [TestCase(false, false, false, false)]
+        [TestCase(false, false, true, true)]
+        [TestCase(true, false, true, false)]
+        [TestCase(true, true, false, true)]
+        public void ShouldDisplayConsoleDetails_StrongModeOverridesManualMode(
+            bool strongEnabled,
+            bool strongActive,
+            bool manualDisguised,
+            bool expected)
+        {
+            Assert.That(
+                NovelReaderWindow.ShouldDisplayConsoleDetails(
+                    strongEnabled,
+                    strongActive,
+                    manualDisguised),
+                Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void StrongDisguiseScroll_IsSerializedAcrossDomainReload()
+        {
+            System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(
+                "strongDisguiseScroll",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(field, Is.Not.Null);
+            Assert.That(field.IsDefined(typeof(UnityEngine.SerializeField), false), Is.True);
+        }
+
         [Test]
         public void GetSyntheticHeaderTimestamp_UsesStableSourceOffset()
         {
