@@ -193,9 +193,9 @@ namespace UnityNovelReader.Editor.Tests
             Assert.That(first, Is.InRange(0, 9));
         }
 
-        [TestCase("ConsoleInfoHeaderMessages", 5)]
-        [TestCase("ConsoleWarningHeaderMessages", 3)]
-        [TestCase("ConsoleErrorHeaderMessages", 1)]
+        [TestCase("ConsoleInfoHeaderMessages", 25)]
+        [TestCase("ConsoleWarningHeaderMessages", 15)]
+        [TestCase("ConsoleErrorHeaderMessages", 5)]
         public void SyntheticHeaderMessagePools_UseConfiguredRatio(string fieldName, int expectedCount)
         {
             System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(

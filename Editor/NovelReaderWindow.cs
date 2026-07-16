@@ -25,19 +25,55 @@ namespace UnityNovelReader.Editor
             "AssetDatabase refresh completed.",
             "Scene view repaint completed.",
             "Assembly reload completed.",
-            "Project database synchronized."
+            "Project database synchronized.",
+            "Inspector selection updated.",
+            "Hierarchy window repaint completed.",
+            "Package Manager status refreshed.",
+            "Editor preferences loaded.",
+            "Scene visibility state synchronized.",
+            "Script compilation completed.",
+            "Project settings loaded.",
+            "Build target state verified.",
+            "Asset dependency cache updated.",
+            "Scene hierarchy synchronized.",
+            "Editor layout restored.",
+            "Import worker connection established.",
+            "Play mode state synchronized.",
+            "Selection history updated.",
+            "Console entries refreshed.",
+            "Lighting data status checked.",
+            "Search index update completed.",
+            "Preset database loaded.",
+            "Shortcut profile synchronized.",
+            "Workspace state restored."
         };
 
         private static readonly string[] ConsoleWarningHeaderMessages =
         {
             "Asset import completed with warnings.",
             "Editor state changed during update.",
-            "Serialized object contains pending changes."
+            "Serialized object contains pending changes.",
+            "Import worker reported recoverable issues.",
+            "Script reload completed with warnings.",
+            "Scene validation returned non-blocking issues.",
+            "Package cache verification completed with warnings.",
+            "Inspector repaint requested during update.",
+            "Asset metadata requires validation.",
+            "Editor callback completed with warnings.",
+            "Missing optional reference was ignored.",
+            "Project settings contain deprecated values.",
+            "Asset dependency scan found stale entries.",
+            "Scene contains unsaved editor changes.",
+            "Import settings were updated automatically."
         };
 
         private static readonly string[] ConsoleErrorHeaderMessages =
         {
-            "Editor task completed with errors."
+            "Editor task completed with errors.",
+            "Failed to process editor callback.",
+            "Asset pipeline operation failed.",
+            "Could not complete the requested import.",
+            "Serialized data validation failed."
         };
 
         private enum ConsoleRowSeverity
