@@ -48,6 +48,35 @@ namespace UnityNovelReader.Editor
             "Workspace state restored."
         };
 
+        private static readonly string[] ConsoleInfoDetailMessages =
+        {
+            "UnityEditor.EditorApplication:Internal_CallUpdateFunctions()",
+            "Imported 0 assets, deleted 0 assets and moved 0 assets.",
+            "UnityEditor.SceneView:RepaintAll()",
+            "Reloaded editor assemblies in 0.214 seconds.",
+            "Project database is up to date.",
+            "Selection.activeObject updated without errors.",
+            "UnityEditor.SceneHierarchyWindow:Repaint()",
+            "Package Manager resolved 12 registered packages.",
+            "Loaded editor preferences from the current user profile.",
+            "Scene visibility state contains 0 pending changes.",
+            "Compilation finished with 0 errors in 1.42 seconds.",
+            "Applied project settings for the active build target.",
+            "Active build target: Android",
+            "Dependency cache contains 18432 valid entries.",
+            "Hierarchy state synchronized for the active scene.",
+            "Restored the saved editor window layout.",
+            "Connected to AssetImportWorker0.",
+            "PlayMode state: EnteredEditMode",
+            "Selection history contains 16 entries.",
+            "Console list view rebuilt successfully.",
+            "Lighting data asset state is valid.",
+            "Search index is current for Assets.",
+            "Loaded 8 preset entries.",
+            "Shortcut profile contains 42 bindings.",
+            "Workspace state restored from the previous session."
+        };
+
         private static readonly string[] ConsoleWarningHeaderMessages =
         {
             "Asset import completed with warnings.",
@@ -67,6 +96,25 @@ namespace UnityNovelReader.Editor
             "Import settings were updated automatically."
         };
 
+        private static readonly string[] ConsoleWarningDetailMessages =
+        {
+            "Importer completed; 2 non-blocking messages were reported.",
+            "State changed while an editor update was in progress.",
+            "ApplyModifiedProperties has not been called for this object.",
+            "AssetImportWorker0 recovered and continued processing.",
+            "Scripts reloaded; 1 obsolete API usage was detected.",
+            "Scene validation completed with 3 advisory messages.",
+            "Package cache contains entries scheduled for cleanup.",
+            "A repaint was requested outside the normal GUI event.",
+            "Metadata was regenerated for one imported asset.",
+            "Editor callback completed after exceeding its frame budget.",
+            "Optional reference could not be resolved and was skipped.",
+            "One deprecated project setting will be migrated on save.",
+            "Dependency scan found 4 stale cache entries.",
+            "The active scene contains unsaved changes.",
+            "Import settings were upgraded to the current serializer version."
+        };
+
         private static readonly string[] ConsoleErrorHeaderMessages =
         {
             "Editor task completed with errors.",
@@ -74,6 +122,15 @@ namespace UnityNovelReader.Editor
             "Asset pipeline operation failed.",
             "Could not complete the requested import.",
             "Serialized data validation failed."
+        };
+
+        private static readonly string[] ConsoleErrorDetailMessages =
+        {
+            "UnityEditor.EditorApplication:Internal_CallUpdateFunctions()",
+            "System.Exception: Editor callback invocation failed.",
+            "AssetDatabase operation aborted before completion.",
+            "Importer returned a non-zero result for the requested asset.",
+            "SerializedObject target data failed validation."
         };
 
         private enum ConsoleRowSeverity
@@ -105,6 +162,7 @@ namespace UnityNovelReader.Editor
         [SerializeField] private long syntheticHeaderAnchorTicks;
         [SerializeField] private int syntheticHeaderSeed;
         [SerializeField] private bool shortcutHidden;
+        [SerializeField] private bool consoleDetailsDisguised;
         private Vector2 chapterScroll;
         private Vector2 bookmarkScroll;
         private Vector2 settingsScroll;
@@ -209,6 +267,26 @@ namespace UnityNovelReader.Editor
             }
 
             OpenWindow();
+        }
+
+        internal static void ToggleDisguise()
+        {
+            NovelReaderWindow existing = FindOpenWindow();
+            if (existing == null)
+            {
+                OpenWindow();
+                return;
+            }
+
+            if (!existing.UsesConsoleAppearance())
+            {
+                ToggleWindow(true);
+                return;
+            }
+
+            existing.consoleDetailsDisguised = !existing.consoleDetailsDisguised;
+            existing.InvalidateConsoleLayout();
+            existing.Repaint();
         }
 
         private static EditorWindow FindDockSibling(NovelReaderWindow reader)
@@ -968,10 +1046,13 @@ namespace UnityNovelReader.Editor
             {
                 ConsoleTextSegment segment = segments[i];
                 int absoluteOffset = currentPage.StartOffset + segment.Start;
+                ConsoleRowSeverity severity = GetConsoleSeverity(segment);
+                string displayText = consoleDetailsDisguised
+                    ? BuildConsoleDetail(severity, absoluteOffset, syntheticHeaderSeed)
+                    : segment.Text;
                 float measuredHeight = Math.Max(
                     oneLineHeight,
-                    consoleTextStyle.CalcHeight(new GUIContent(segment.Text), textWidth));
-                ConsoleRowSeverity severity = GetConsoleSeverity(segment);
+                    consoleTextStyle.CalcHeight(new GUIContent(displayText), textWidth));
                 var row = new ConsoleRenderRow
                 {
                     Header = simulateHeaders
@@ -984,7 +1065,7 @@ namespace UnityNovelReader.Editor
                             absoluteOffset,
                             syntheticHeaderSeed)
                         : null,
-                    Text = segment.Text,
+                    Text = displayText,
                     SourceText = segment.SourceText,
                     SourceOffset = absoluteOffset,
                     Severity = severity,
@@ -1065,6 +1146,31 @@ namespace UnityNovelReader.Editor
                 seed,
                 messages.Length)];
             return "[" + timestamp.ToString("HH:mm:ss") + "] " + message;
+        }
+
+        private static string BuildConsoleDetail(
+            ConsoleRowSeverity severity,
+            int absoluteOffset,
+            int seed)
+        {
+            string[] messages;
+            switch (severity)
+            {
+                case ConsoleRowSeverity.Warning:
+                    messages = ConsoleWarningDetailMessages;
+                    break;
+                case ConsoleRowSeverity.Error:
+                    messages = ConsoleErrorDetailMessages;
+                    break;
+                default:
+                    messages = ConsoleInfoDetailMessages;
+                    break;
+            }
+
+            return messages[SelectSyntheticHeaderMessageIndex(
+                absoluteOffset,
+                seed,
+                messages.Length)];
         }
 
         internal static int SelectSyntheticHeaderMessageIndex(int absoluteOffset, int seed, int poolSize)
@@ -1567,10 +1673,10 @@ namespace UnityNovelReader.Editor
 
             GUILayout.Label("Shortcuts", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Bindings are stored by Unity's user-level Shortcut Manager and are not written into the project.",
+                "The disguise key toggles matching fake log details in Console Reader; in Classic Reader it behaves like the boss key. The boss key always hides the reader and focuses the selected decoy. Bindings are stored by Unity's user-level Shortcut Manager.",
                 MessageType.Info);
-            DrawShortcutBindingEditor("Toggle reader", ref toggleShortcutKey, ref toggleShortcutModifiers);
-            DrawShortcutBindingEditor("Boss key / quick hide", ref quickHideShortcutKey, ref quickHideShortcutModifiers);
+            DrawShortcutBindingEditor("Disguise key", ref toggleShortcutKey, ref toggleShortcutModifiers);
+            DrawShortcutBindingEditor("Boss key", ref quickHideShortcutKey, ref quickHideShortcutModifiers);
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Apply shortcuts", GUILayout.Height(26f)))
@@ -1611,7 +1717,7 @@ namespace UnityNovelReader.Editor
             EditorGUILayout.HelpBox(
                 "The configured boss key and Esc hide the reader and focus the selected Unity window. Docked readers keep their tab group when another tab is available. Press the boss key again to restore the reader. If the target is unavailable, Scene is used as the fallback.",
                 MessageType.None);
-            if (GUILayout.Button("Test disguise now", GUILayout.Height(26f)))
+            if (GUILayout.Button("Test boss key now", GUILayout.Height(26f)))
             {
                 ToggleWindow(true);
                 GUIUtility.ExitGUI();

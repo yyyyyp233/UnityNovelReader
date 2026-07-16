@@ -4,7 +4,7 @@
 
 Unity Novel Reader is a local text reader that runs inside the Unity Editor. Its default reading mode uses a Console-style layout, including a Console tab title, toolbar, log rows, severity icons, search field, and counters.
 
-The reader supports paging, chapters, bookmarks, progress persistence, and configurable shortcuts. A boss key can hide or restore the reader and focus a Scene, Console, Profiler, Animator, or Project window.
+The reader supports paging, chapters, bookmarks, progress persistence, and configurable shortcuts. A disguise key switches between novel text and matching log details in Console mode; a boss key hides or restores the reader and focuses a Scene, Console, Profiler, Animator, or Project window.
 
 Books, reading progress, and bookmarks stay outside the Unity project. The tool can be removed without losing reading data or leaving source files in the project.
 
@@ -20,6 +20,7 @@ The default Console-style mode provides the following behavior:
 - Rows split or grow with the window width so the complete text remains visible.
 - The chapter/bookmark sidebar starts collapsed and can be expanded when needed.
 - Timestamped synthetic log headers are optional and disabled by default.
+- The disguise key replaces novel text with log details paired one-to-one with the synthetic headers; triggering it again restores the text.
 
 This mode changes presentation only. Original text, whitespace, offsets, reading progress, and bookmarks remain intact.
 
@@ -33,7 +34,7 @@ This mode changes presentation only. Original text, whitespace, offsets, reading
 - Keeps all state in the user data directory, never in the Unity project.
 - Provides chapter search, page navigation, progress seeking, and bookmarks.
 - Keeps the chapter/bookmark sidebar collapsed by default in Console mode, with explicit expand and collapse controls.
-- Offers rebindable shortcuts, a boss key, and selectable Unity decoy windows.
+- Offers a rebindable disguise key, boss key, and selectable Unity decoy windows.
 - Includes an in-window Settings page for shortcut bindings, reader appearance, synthetic headers, and disguise strategy.
 - Keeps visible `Prev` and `Next` controls, a reversible `Clear`, and color toggles that never filter out text.
 - Contains Editor-only code and is excluded from player builds.
@@ -112,7 +113,7 @@ The toolbar search field searches chapter titles and automatically expands the c
 | Hide / restore the visible text | `Clear` |
 | Add a bookmark | `Mark` |
 | Chapters, bookmarks, library, settings | `Editor ▼`; chapter panel also uses `▶` / `◀` |
-| Toggle reader | `Ctrl+Alt+R` |
+| Disguise key: toggle text/log details in Console; act as boss key in Classic | `Ctrl+Alt+R` |
 | Quick hide to the selected decoy / restore | `Ctrl+Alt+H` |
 | Hide while focused | `Esc` |
 | Next page | `Space`, `PageDown`, `Right Arrow` |
@@ -120,7 +121,7 @@ The toolbar search field searches chapter titles and automatically expands the c
 
 Shortcuts can be changed directly on the reader's Settings page or in Unity's Shortcut Manager.
 
-Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. When the reader shares a dock area with other tabs, the toggle shortcuts select another tab without destroying the reader window, so restoring it keeps the original tab layout. Console mode exposes `Editor ▼ > Classic Reader`; Classic mode keeps the same `Editor ▼` menu and exposes `Console Reader` for switching back. If the selected decoy cannot be opened, the reader falls back to `Scene`.
+Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. When the reader shares a dock area with other tabs, the boss key selects another tab without destroying the reader window, so restoring it keeps the original tab layout. In Console mode the disguise key changes text only and does not move the window; in Classic mode it behaves like the boss key. Console mode exposes `Editor ▼ > Classic Reader`; Classic mode keeps the same `Editor ▼` menu and exposes `Console Reader` for switching back. If the selected decoy cannot be opened, the reader falls back to `Scene`.
 
 ## Privacy and project isolation
 

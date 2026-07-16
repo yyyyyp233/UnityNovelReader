@@ -9,9 +9,9 @@ namespace UnityNovelReader.Editor
         internal const string QuickHideShortcutId = "Unity Novel Reader/Quick Hide";
 
         [Shortcut(ToggleShortcutId, KeyCode.R, ShortcutModifiers.Control | ShortcutModifiers.Alt)]
-        private static void ToggleReader()
+        private static void ToggleDisguise()
         {
-            NovelReaderWindow.ToggleWindow(false);
+            NovelReaderWindow.ToggleDisguise();
         }
 
         [Shortcut(QuickHideShortcutId, KeyCode.H, ShortcutModifiers.Control | ShortcutModifiers.Alt)]

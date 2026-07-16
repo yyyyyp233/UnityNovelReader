@@ -206,6 +206,25 @@ namespace UnityNovelReader.Editor.Tests
             Assert.That((string[])field.GetValue(null), Has.Length.EqualTo(expectedCount));
         }
 
+        [TestCase("ConsoleInfoHeaderMessages", "ConsoleInfoDetailMessages", 25)]
+        [TestCase("ConsoleWarningHeaderMessages", "ConsoleWarningDetailMessages", 15)]
+        [TestCase("ConsoleErrorHeaderMessages", "ConsoleErrorDetailMessages", 5)]
+        public void SyntheticDetailPools_MatchTheirHeaderPools(
+            string headerFieldName,
+            string detailFieldName,
+            int expectedCount)
+        {
+            const System.Reflection.BindingFlags flags =
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic;
+            System.Reflection.FieldInfo headerField = typeof(NovelReaderWindow).GetField(headerFieldName, flags);
+            System.Reflection.FieldInfo detailField = typeof(NovelReaderWindow).GetField(detailFieldName, flags);
+
+            Assert.That(headerField, Is.Not.Null);
+            Assert.That(detailField, Is.Not.Null);
+            Assert.That((string[])headerField.GetValue(null), Has.Length.EqualTo(expectedCount));
+            Assert.That((string[])detailField.GetValue(null), Has.Length.EqualTo(expectedCount));
+        }
+
         [Test]
         public void EscapeGenericMenuLabel_KeepsBookInsideLibrarySubmenu()
         {
@@ -247,6 +266,17 @@ namespace UnityNovelReader.Editor.Tests
         {
             System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(
                 "shortcutHidden",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(field, Is.Not.Null);
+            Assert.That(field.IsDefined(typeof(UnityEngine.SerializeField), false), Is.True);
+        }
+
+        [Test]
+        public void ConsoleDetailsDisguised_IsSerializedAcrossDomainReload()
+        {
+            System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(
+                "consoleDetailsDisguised",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 
             Assert.That(field, Is.Not.Null);
