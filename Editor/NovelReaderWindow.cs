@@ -167,6 +167,7 @@ namespace UnityNovelReader.Editor
         private void OnEnable()
         {
             minSize = new Vector2(420f, 320f);
+            ResetConsoleIconReferences();
             stateStore = new ReaderStateStore();
             state = stateStore.Load();
             UpdateWindowTitle();
@@ -176,6 +177,7 @@ namespace UnityNovelReader.Editor
         private void OnDisable()
         {
             ReleaseMutedConsoleIcons();
+            ResetConsoleIconReferences();
             SaveState();
         }
 
@@ -263,15 +265,7 @@ namespace UnityNovelReader.Editor
 
             consoleHeaderStyle.fontSize = state.preferences.consoleFontSize;
 
-            if (consoleInfoIcon == null)
-            {
-                consoleInfoIcon = EditorGUIUtility.IconContent("console.infoicon.sml");
-                consoleWarningIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
-                consoleErrorIcon = EditorGUIUtility.IconContent("console.erroricon.sml");
-                consoleInfoRowIcon = EditorGUIUtility.IconContent("console.infoicon");
-                consoleWarningRowIcon = EditorGUIUtility.IconContent("console.warnicon");
-                consoleErrorRowIcon = EditorGUIUtility.IconContent("console.erroricon");
-            }
+            EnsureConsoleIcons();
 
             if (chapterRowStyle == null)
             {
@@ -289,6 +283,42 @@ namespace UnityNovelReader.Editor
                 selectedChapterRowStyle.normal.textColor = new Color(0.3f, 0.72f, 1f);
                 selectedChapterRowStyle.fontStyle = FontStyle.Bold;
             }
+        }
+
+        private void EnsureConsoleIcons()
+        {
+            if (HasValidConsoleIcon(consoleInfoIcon)
+                && HasValidConsoleIcon(consoleWarningIcon)
+                && HasValidConsoleIcon(consoleErrorIcon)
+                && HasValidConsoleIcon(consoleInfoRowIcon)
+                && HasValidConsoleIcon(consoleWarningRowIcon)
+                && HasValidConsoleIcon(consoleErrorRowIcon))
+            {
+                return;
+            }
+
+            ReleaseMutedConsoleIcons();
+            consoleInfoIcon = EditorGUIUtility.IconContent("console.infoicon.sml");
+            consoleWarningIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
+            consoleErrorIcon = EditorGUIUtility.IconContent("console.erroricon.sml");
+            consoleInfoRowIcon = EditorGUIUtility.IconContent("console.infoicon");
+            consoleWarningRowIcon = EditorGUIUtility.IconContent("console.warnicon");
+            consoleErrorRowIcon = EditorGUIUtility.IconContent("console.erroricon");
+        }
+
+        internal static bool HasValidConsoleIcon(GUIContent icon)
+        {
+            return icon != null && icon.image != null;
+        }
+
+        private void ResetConsoleIconReferences()
+        {
+            consoleInfoIcon = null;
+            consoleWarningIcon = null;
+            consoleErrorIcon = null;
+            consoleInfoRowIcon = null;
+            consoleWarningRowIcon = null;
+            consoleErrorRowIcon = null;
         }
 
         private bool UsesConsoleAppearance()

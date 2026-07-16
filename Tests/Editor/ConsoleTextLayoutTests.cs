@@ -146,5 +146,17 @@ namespace UnityNovelReader.Editor.Tests
             Assert.That(contentMouse.x, Is.EqualTo(60f));
             Assert.That(contentMouse.y, Is.EqualTo(175f));
         }
+
+        [Test]
+        public void HasValidConsoleIcon_RejectsDestroyedTextureReference()
+        {
+            var texture = new UnityEngine.Texture2D(1, 1);
+            var content = new UnityEngine.GUIContent { image = texture };
+            Assert.That(NovelReaderWindow.HasValidConsoleIcon(content), Is.True);
+
+            UnityEngine.Object.DestroyImmediate(texture);
+
+            Assert.That(NovelReaderWindow.HasValidConsoleIcon(content), Is.False);
+        }
     }
 }
