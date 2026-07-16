@@ -10,6 +10,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools~\Build-UnityPackage.ps1
 
 Use `-UnityPath` and `-OutputPath` when the default Unity Hub installation or output path is not suitable. The script creates temporary compile and export projects, then writes `Releases~/UnityNovelReader-<version>.unitypackage`.
 
+Before export, the build script replaces Unity's absolute compiler PDB path in the DLL with the neutral filename `UnityNovelReader.Editor.pdb`. The build fails if it cannot identify the path safely or if an absolute PDB path remains.
+
 ## Verify
 
 Before tagging a release:
@@ -19,8 +21,9 @@ Before tagging a release:
 3. Confirm there are no compile errors and the reader opens from **Tools > Unity Novel Reader > Open Reader**.
 4. Confirm the package imports only `Assets/UnityNovelReader.Editor.dll` and its `.meta`.
 5. Confirm the DLL importer enables Editor only and disables all player platforms.
-6. Open representative UTF-8, UTF-16, and GB18030 files; verify chapters, progress, bookmarks, shortcuts, and each disguise target.
-7. Record the Unity version and SHA-256 checksum in the release notes.
+6. Scan the exported DLL and confirm it contains no absolute PDB, user-profile, temporary-build, or project path.
+7. Open representative UTF-8, UTF-16, and GB18030 files; verify chapters, progress, bookmarks, shortcuts, and each disguise target.
+8. Record the Unity version and SHA-256 checksum in the release notes.
 
 ## Publish
 

@@ -113,6 +113,73 @@ function New-TemporaryUnityProject {
     )
 }
 
+function Remove-EmbeddedCompilerPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$AssemblyPath
+    )
+
+    $bytes = [System.IO.File]::ReadAllBytes($AssemblyPath)
+    $neutralPdbName = 'UnityNovelReader.Editor.pdb'
+    $needle = [System.Text.Encoding]::ASCII.GetBytes($neutralPdbName)
+    $matches = [System.Collections.Generic.List[int]]::new()
+
+    for ($offset = 0; $offset -le $bytes.Length - $needle.Length; $offset++) {
+        $matchesNeedle = $true
+        for ($index = 0; $index -lt $needle.Length; $index++) {
+            if ($bytes[$offset + $index] -ne $needle[$index]) {
+                $matchesNeedle = $false
+                break
+            }
+        }
+
+        if ($matchesNeedle) {
+            $matches.Add($offset)
+        }
+    }
+
+    if ($matches.Count -ne 1) {
+        throw "Expected one embedded PDB name in the compiled assembly, found $($matches.Count)."
+    }
+
+    $pdbNameOffset = $matches[0]
+    $pathStart = $pdbNameOffset
+    while ($pathStart -gt 0 -and
+        $bytes[$pathStart - 1] -ge 32 -and
+        $bytes[$pathStart - 1] -le 126) {
+        $pathStart--
+    }
+
+    $embeddedPathLength = ($pdbNameOffset + $needle.Length) - $pathStart
+    $embeddedPath = [System.Text.Encoding]::ASCII.GetString(
+        $bytes,
+        $pathStart,
+        $embeddedPathLength)
+    if ($embeddedPath -eq $neutralPdbName) {
+        Write-Host 'Compiler debug path is already neutral.'
+        return
+    }
+
+    if ($embeddedPath -notmatch '^(?:[A-Za-z]:[\\/]|/(?:Users|home)/)') {
+        throw 'The embedded PDB path was not absolute and could not be sanitized safely.'
+    }
+
+    for ($index = 0; $index -lt $embeddedPathLength; $index++) {
+        $bytes[$pathStart + $index] = 0
+    }
+
+    [System.Array]::Copy($needle, 0, $bytes, $pathStart, $needle.Length)
+    [System.IO.File]::WriteAllBytes($AssemblyPath, $bytes)
+
+    $sanitizedBytes = [System.IO.File]::ReadAllBytes($AssemblyPath)
+    $binaryText = [System.Text.Encoding]::ASCII.GetString($sanitizedBytes)
+    if ($binaryText -match '(?i)(?:[A-Za-z]:[\\/]|/(?:Users|home)/)[\x20-\x7E]{0,512}?\.pdb') {
+        throw 'An absolute PDB path remains in the compiled assembly.'
+    }
+
+    Write-Host 'Removed the absolute compiler PDB path from the release assembly.'
+}
+
 try {
     # Phase 1: compile the open-source Editor assembly in an isolated Unity project.
     New-TemporaryUnityProject -ProjectPath $compileProject -LogPath $compileCreateLog
@@ -137,6 +204,8 @@ try {
     if (-not (Test-Path -LiteralPath $compiledAssembly -PathType Leaf)) {
         throw "Compiled Editor assembly not found: $compiledAssembly"
     }
+
+    Remove-EmbeddedCompilerPath -AssemblyPath $compiledAssembly
 
     # Phase 2: export only the DLL from a separate clean Unity project.
     New-TemporaryUnityProject -ProjectPath $exportProject -LogPath $exportCreateLog
