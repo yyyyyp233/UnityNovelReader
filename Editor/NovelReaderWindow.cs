@@ -104,6 +104,7 @@ namespace UnityNovelReader.Editor
         [SerializeField] private Vector2 readerScroll;
         [SerializeField] private long syntheticHeaderAnchorTicks;
         [SerializeField] private int syntheticHeaderSeed;
+        [SerializeField] private bool shortcutHidden;
         private Vector2 chapterScroll;
         private Vector2 bookmarkScroll;
         private Vector2 settingsScroll;
@@ -151,6 +152,7 @@ namespace UnityNovelReader.Editor
         internal static NovelReaderWindow OpenWindow()
         {
             NovelReaderWindow window = GetWindow<NovelReaderWindow>();
+            window.shortcutHidden = false;
             window.UpdateWindowTitle();
             window.minSize = new Vector2(420f, 320f);
             window.Show();
@@ -171,10 +173,32 @@ namespace UnityNovelReader.Editor
             NovelReaderWindow existing = FindOpenWindow();
             if (existing != null)
             {
+                if (existing.shortcutHidden || focusedWindow != existing)
+                {
+                    existing.shortcutHidden = false;
+                    existing.Show();
+                    existing.Focus();
+                    existing.Repaint();
+                    return;
+                }
+
                 DecoyWindowTarget decoyTarget = existing.state != null && existing.state.preferences != null
                     ? existing.state.preferences.decoyWindow
                     : DecoyWindowTarget.Console;
                 existing.SaveState();
+                EditorWindow dockSibling = FindDockSibling(existing);
+                if (dockSibling != null)
+                {
+                    existing.shortcutHidden = true;
+                    dockSibling.Focus();
+                    if (focusDecoyWhenHiding)
+                    {
+                        EditorApplication.delayCall += delegate { FocusDecoyWindow(decoyTarget); };
+                    }
+
+                    return;
+                }
+
                 existing.Close();
                 if (focusDecoyWhenHiding)
                 {
@@ -185,6 +209,43 @@ namespace UnityNovelReader.Editor
             }
 
             OpenWindow();
+        }
+
+        private static EditorWindow FindDockSibling(NovelReaderWindow reader)
+        {
+            if (reader == null || !reader.docked)
+            {
+                return null;
+            }
+
+            EditorWindow[] windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
+            for (int i = 0; i < windows.Length; i++)
+            {
+                EditorWindow candidate = windows[i];
+                if (candidate == null
+                    || candidate == reader
+                    || candidate is NovelReaderWindow
+                    || !candidate.docked)
+                {
+                    continue;
+                }
+
+                if (ShareDockGeometry(reader.position, candidate.position))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        internal static bool ShareDockGeometry(Rect left, Rect right)
+        {
+            const float tolerance = 1f;
+            return Mathf.Abs(left.x - right.x) <= tolerance
+                && Mathf.Abs(left.y - right.y) <= tolerance
+                && Mathf.Abs(left.width - right.width) <= tolerance
+                && Mathf.Abs(left.height - right.height) <= tolerance;
         }
 
         private static NovelReaderWindow FindOpenWindow()
@@ -239,6 +300,11 @@ namespace UnityNovelReader.Editor
             ReleaseMutedConsoleIcons();
             ResetConsoleIconReferences();
             SaveState();
+        }
+
+        private void OnFocus()
+        {
+            shortcutHidden = false;
         }
 
         private void OnGUI()
@@ -1543,7 +1609,7 @@ namespace UnityNovelReader.Editor
             }
 
             EditorGUILayout.HelpBox(
-                "The configured boss key and Esc close the reader and focus the selected Unity window. Press the boss key again to restore the reader. If the target is unavailable, Scene is used as the fallback.",
+                "The configured boss key and Esc hide the reader and focus the selected Unity window. Docked readers keep their tab group when another tab is available. Press the boss key again to restore the reader. If the target is unavailable, Scene is used as the fallback.",
                 MessageType.None);
             if (GUILayout.Button("Test disguise now", GUILayout.Height(26f)))
             {

@@ -133,7 +133,7 @@ Console 皮肤只改变呈现方式。默认不生成英文日志头，原小说
 
 可直接在阅读器 Settings 页或 Unity Shortcut Manager 里重新绑定。
 
-通过 `Editor ▼ > Boss-key target` 选择老板键目标：`Scene`、`Console`、`Profiler`、`Animator` 或 `Project`。Console 模式可通过 `Editor ▼ > Classic Reader` 切换到传统布局；Classic 模式保留同一个 `Editor ▼` 菜单，并显示 `Console Reader` 用于切回伪装模式。如果当前 Unity 版本无法打开所选窗口，会自动回退到 `Scene`。
+通过 `Editor ▼ > Boss-key target` 选择老板键目标：`Scene`、`Console`、`Profiler`、`Animator` 或 `Project`。当阅读器与其他页签位于同一个 Dock 区域时，显示/隐藏快捷键会切换同组页签并保留原窗口实例，恢复后仍处于原来的页签布局。Console 模式可通过 `Editor ▼ > Classic Reader` 切换到传统布局；Classic 模式保留同一个 `Editor ▼` 菜单，并显示 `Console Reader` 用于切回伪装模式。如果当前 Unity 版本无法打开所选窗口，会自动回退到 `Scene`。
 
 ## 数据与项目隔离
 

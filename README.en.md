@@ -120,7 +120,7 @@ The toolbar search field searches chapter titles and automatically expands the c
 
 Shortcuts can be changed directly on the reader's Settings page or in Unity's Shortcut Manager.
 
-Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. Console mode exposes `Editor ▼ > Classic Reader`; Classic mode keeps the same `Editor ▼` menu and exposes `Console Reader` for switching back. If the selected decoy cannot be opened, the reader falls back to `Scene`.
+Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. When the reader shares a dock area with other tabs, the toggle shortcuts select another tab without destroying the reader window, so restoring it keeps the original tab layout. Console mode exposes `Editor ▼ > Classic Reader`; Classic mode keeps the same `Editor ▼` menu and exposes `Console Reader` for switching back. If the selected decoy cannot be opened, the reader falls back to `Scene`.
 
 ## Privacy and project isolation
 

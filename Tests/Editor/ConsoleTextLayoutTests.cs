@@ -226,6 +226,34 @@ namespace UnityNovelReader.Editor.Tests
         }
 
         [Test]
+        public void ShareDockGeometry_AllowsMinorEditorRoundingOnly()
+        {
+            var dockArea = new UnityEngine.Rect(420f, 80f, 760f, 540f);
+
+            Assert.That(
+                NovelReaderWindow.ShareDockGeometry(
+                    dockArea,
+                    new UnityEngine.Rect(420.5f, 79.5f, 760.5f, 539.5f)),
+                Is.True);
+            Assert.That(
+                NovelReaderWindow.ShareDockGeometry(
+                    dockArea,
+                    new UnityEngine.Rect(421.5f, 80f, 760f, 540f)),
+                Is.False);
+        }
+
+        [Test]
+        public void ShortcutHidden_IsSerializedAcrossDomainReload()
+        {
+            System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(
+                "shortcutHidden",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(field, Is.Not.Null);
+            Assert.That(field.IsDefined(typeof(UnityEngine.SerializeField), false), Is.True);
+        }
+
+        [Test]
         public void GetSyntheticHeaderTimestamp_UsesStableSourceOffset()
         {
             var anchor = new System.DateTime(2026, 7, 16, 14, 20, 30);
