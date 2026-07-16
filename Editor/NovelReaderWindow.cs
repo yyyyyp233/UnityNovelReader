@@ -17,6 +17,49 @@ namespace UnityNovelReader.Editor
         private const float ConsoleIconSize = 32f;
         private const float ConsoleRowVerticalPadding = 3f;
         private const float ConsoleMinimumRowHeight = 40f;
+        private const int SyntheticHeaderCharactersPerSecond = 64;
+
+        private static readonly string[] ConsoleInfoHeaderMessages =
+        {
+            "EditorApplication update completed.",
+            "AssetDatabase refresh completed.",
+            "Scene view repaint completed.",
+            "Assembly reload completed.",
+            "Project database synchronized.",
+            "Inspector selection updated.",
+            "Hierarchy window repaint completed.",
+            "Package Manager status refreshed.",
+            "Editor preferences loaded.",
+            "Scene visibility state synchronized."
+        };
+
+        private static readonly string[] ConsoleWarningHeaderMessages =
+        {
+            "Asset import completed with warnings.",
+            "Editor state changed during update.",
+            "Serialized object contains pending changes.",
+            "Import worker reported recoverable issues.",
+            "Script reload completed with warnings.",
+            "Scene validation returned non-blocking issues.",
+            "Package cache verification completed with warnings.",
+            "Inspector repaint requested during update.",
+            "Asset metadata requires validation.",
+            "Editor callback completed with warnings."
+        };
+
+        private static readonly string[] ConsoleErrorHeaderMessages =
+        {
+            "Editor task completed with errors.",
+            "Failed to process editor callback.",
+            "Asset pipeline operation failed.",
+            "Exception caught while invoking editor task.",
+            "Could not complete the requested import.",
+            "Serialized data validation failed.",
+            "Editor window callback returned an error.",
+            "Refresh operation terminated unexpectedly.",
+            "Project database update failed.",
+            "Assembly reload reported an error."
+        };
 
         private enum ConsoleRowSeverity
         {
@@ -44,6 +87,8 @@ namespace UnityNovelReader.Editor
         private BookState activeBook;
         private PageSlice currentPage;
         [SerializeField] private Vector2 readerScroll;
+        [SerializeField] private long syntheticHeaderAnchorTicks;
+        [SerializeField] private int syntheticHeaderSeed;
         private Vector2 chapterScroll;
         private Vector2 bookmarkScroll;
         private Vector2 settingsScroll;
@@ -671,7 +716,12 @@ namespace UnityNovelReader.Editor
                         row.y + ConsoleRowVerticalPadding,
                         textWidth,
                         headerHeight),
-                    BuildConsoleHeader(DateTime.Now, ConsoleRowSeverity.Error, 0));
+                    BuildConsoleHeader(
+                        GetSyntheticHeaderAnchorTime(),
+                        ConsoleRowSeverity.Error,
+                        0,
+                        syntheticHeaderSeed),
+                    ConsoleRowSeverity.Error);
             }
 
             DrawConsoleText(
@@ -787,6 +837,7 @@ namespace UnityNovelReader.Editor
                             textWidth,
                             row.HeaderHeight),
                         row.Header,
+                        row.Severity,
                         isMarked);
                 }
 
@@ -835,10 +886,11 @@ namespace UnityNovelReader.Editor
                 currentPage.Text,
                 value => consoleTextStyle.CalcHeight(new GUIContent(value), textWidth),
                 preferredTextHeight);
-            DateTime latestLogTime = DateTime.Now;
+            DateTime syntheticHeaderAnchorTime = GetSyntheticHeaderAnchorTime();
             for (int i = 0; i < segments.Count; i++)
             {
                 ConsoleTextSegment segment = segments[i];
+                int absoluteOffset = currentPage.StartOffset + segment.Start;
                 float measuredHeight = Math.Max(
                     oneLineHeight,
                     consoleTextStyle.CalcHeight(new GUIContent(segment.Text), textWidth));
@@ -847,13 +899,17 @@ namespace UnityNovelReader.Editor
                 {
                     Header = simulateHeaders
                         ? BuildConsoleHeader(
-                            latestLogTime.AddSeconds(i - segments.Count + 1),
+                            GetSyntheticHeaderTimestamp(
+                                syntheticHeaderAnchorTime,
+                                currentPage.EndOffset,
+                                absoluteOffset),
                             severity,
-                            currentPage.StartOffset + segment.Start)
+                            absoluteOffset,
+                            syntheticHeaderSeed)
                         : null,
                     Text = segment.Text,
                     SourceText = segment.SourceText,
-                    SourceOffset = currentPage.StartOffset + segment.Start,
+                    SourceOffset = absoluteOffset,
                     Severity = severity,
                     Top = consoleRowsHeight,
                     Height = Math.Max(
@@ -910,40 +966,51 @@ namespace UnityNovelReader.Editor
         private static string BuildConsoleHeader(
             DateTime timestamp,
             ConsoleRowSeverity severity,
-            int absoluteOffset)
+            int absoluteOffset,
+            int seed)
         {
-            uint hash = unchecked(((uint)absoluteOffset + 1u) * 2654435761u);
-            string message;
+            string[] messages;
             switch (severity)
             {
                 case ConsoleRowSeverity.Warning:
-                    message = (hash & 1u) == 0u
-                        ? "Asset import completed with warnings."
-                        : "Editor state changed during update.";
+                    messages = ConsoleWarningHeaderMessages;
                     break;
                 case ConsoleRowSeverity.Error:
-                    message = (hash & 1u) == 0u
-                        ? "Editor task completed with errors."
-                        : "Failed to process editor callback.";
+                    messages = ConsoleErrorHeaderMessages;
                     break;
                 default:
-                    switch (hash % 3u)
-                    {
-                        case 0u:
-                            message = "EditorApplication update completed.";
-                            break;
-                        case 1u:
-                            message = "AssetDatabase refresh completed.";
-                            break;
-                        default:
-                            message = "Scene view repaint completed.";
-                            break;
-                    }
-
+                    messages = ConsoleInfoHeaderMessages;
                     break;
             }
 
+            string message = messages[SelectSyntheticHeaderMessageIndex(
+                absoluteOffset,
+                seed,
+                messages.Length)];
             return "[" + timestamp.ToString("HH:mm:ss") + "] " + message;
+        }
+
+        internal static int SelectSyntheticHeaderMessageIndex(int absoluteOffset, int seed, int poolSize)
+        {
+            if (poolSize <= 0)
+            {
+                throw new ArgumentOutOfRangeException("poolSize");
+            }
+
+            uint hash = unchecked(((uint)absoluteOffset + 1u) * 2654435761u);
+            hash ^= unchecked(((uint)seed + 1u) * 2246822519u);
+            hash ^= hash >> 16;
+            return (int)(hash % (uint)poolSize);
+        }
+
+        internal static DateTime GetSyntheticHeaderTimestamp(
+            DateTime anchorTime,
+            int pageEndOffset,
+            int absoluteOffset)
+        {
+            int remainingCharacters = Math.Max(0, pageEndOffset - absoluteOffset);
+            int secondsBeforeAnchor = remainingCharacters / SyntheticHeaderCharactersPerSecond;
+            return anchorTime.AddSeconds(-secondsBeforeAnchor);
         }
 
         private ConsoleRowSeverity GetConsoleSeverity(ConsoleTextSegment segment)
@@ -1160,14 +1227,16 @@ namespace UnityNovelReader.Editor
             texture = null;
         }
 
-        private void DrawConsoleHeader(Rect rect, string text, bool isMarked = false)
+        private void DrawConsoleHeader(
+            Rect rect,
+            string text,
+            ConsoleRowSeverity severity,
+            bool isMarked = false)
         {
             Color previousColor = consoleHeaderStyle.normal.textColor;
             consoleHeaderStyle.normal.textColor = isMarked
                 ? (EditorGUIUtility.isProSkin ? new Color(0.90f, 0.90f, 0.90f) : Color.white)
-                : (EditorGUIUtility.isProSkin
-                    ? new Color(0.76f, 0.76f, 0.76f)
-                    : new Color(0.20f, 0.20f, 0.20f));
+                : GetConsoleTextColor(severity);
             GUI.Label(rect, text, consoleHeaderStyle);
             consoleHeaderStyle.normal.textColor = previousColor;
         }
@@ -1257,6 +1326,34 @@ namespace UnityNovelReader.Editor
             cachedConsolePageEnd = -1;
             cachedConsoleFontSize = -1;
             cachedConsoleWidth = -1f;
+        }
+
+        private DateTime GetSyntheticHeaderAnchorTime()
+        {
+            EnsureSyntheticHeaderSnapshot();
+            return new DateTime(syntheticHeaderAnchorTicks, DateTimeKind.Local);
+        }
+
+        private void EnsureSyntheticHeaderSnapshot()
+        {
+            if (syntheticHeaderAnchorTicks > 0
+                && syntheticHeaderAnchorTicks <= DateTime.MaxValue.Ticks
+                && syntheticHeaderSeed != 0)
+            {
+                return;
+            }
+
+            RefreshSyntheticHeaderSnapshot();
+        }
+
+        private void RefreshSyntheticHeaderSnapshot()
+        {
+            syntheticHeaderAnchorTicks = DateTime.Now.Ticks;
+            syntheticHeaderSeed = Guid.NewGuid().GetHashCode();
+            if (syntheticHeaderSeed == 0)
+            {
+                syntheticHeaderSeed = 1;
+            }
         }
 
         private void DrawReader()
@@ -1594,6 +1691,11 @@ namespace UnityNovelReader.Editor
             state.preferences.appearance = appearance;
             mainPage = 0;
             UpdateWindowTitle();
+            if (appearance == ReaderAppearance.Console)
+            {
+                RefreshSyntheticHeaderSnapshot();
+            }
+
             InvalidateConsoleLayout();
             SaveState();
             Repaint();
@@ -1609,6 +1711,11 @@ namespace UnityNovelReader.Editor
             }
 
             state.preferences.simulateConsoleHeaders = enabled;
+            if (enabled)
+            {
+                RefreshSyntheticHeaderSnapshot();
+            }
+
             InvalidateConsoleLayout();
             SaveState();
             Repaint();
@@ -1760,6 +1867,8 @@ namespace UnityNovelReader.Editor
             {
                 state.preferences.charactersPerPage = nextPageSize;
                 readerScroll = Vector2.zero;
+                RefreshSyntheticHeaderSnapshot();
+                InvalidateConsoleLayout();
                 SaveState();
             }
 
@@ -1871,6 +1980,11 @@ namespace UnityNovelReader.Editor
                 consoleBufferCleared = false;
                 markedConsoleSourceOffset = -1;
                 readerScroll = ResolveReaderScrollAfterBookLoad(readerScroll, resetScroll);
+                if (resetScroll)
+                {
+                    RefreshSyntheticHeaderSnapshot();
+                }
+
                 InvalidateConsoleLayout();
                 SaveState();
                 Repaint();
@@ -2003,6 +2117,7 @@ namespace UnityNovelReader.Editor
             consoleBufferCleared = false;
             markedConsoleSourceOffset = -1;
             readerScroll = Vector2.zero;
+            RefreshSyntheticHeaderSnapshot();
             InvalidateConsoleLayout();
             SaveState();
             Repaint();

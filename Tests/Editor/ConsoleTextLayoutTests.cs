@@ -182,5 +182,40 @@ namespace UnityNovelReader.Editor.Tests
             Assert.That(field, Is.Not.Null);
             Assert.That(field.IsDefined(typeof(UnityEngine.SerializeField), false), Is.True);
         }
+
+        [Test]
+        public void SelectSyntheticHeaderMessageIndex_IsDeterministicAndBounded()
+        {
+            int first = NovelReaderWindow.SelectSyntheticHeaderMessageIndex(1274, 913, 10);
+            int second = NovelReaderWindow.SelectSyntheticHeaderMessageIndex(1274, 913, 10);
+
+            Assert.That(first, Is.EqualTo(second));
+            Assert.That(first, Is.InRange(0, 9));
+        }
+
+        [Test]
+        public void GetSyntheticHeaderTimestamp_UsesStableSourceOffset()
+        {
+            var anchor = new System.DateTime(2026, 7, 16, 14, 20, 30);
+
+            System.DateTime timestamp = NovelReaderWindow.GetSyntheticHeaderTimestamp(
+                anchor,
+                900,
+                260);
+
+            Assert.That(timestamp, Is.EqualTo(anchor.AddSeconds(-10)));
+        }
+
+        [TestCase("syntheticHeaderAnchorTicks")]
+        [TestCase("syntheticHeaderSeed")]
+        public void SyntheticHeaderSnapshot_IsSerializedAcrossDomainReload(string fieldName)
+        {
+            System.Reflection.FieldInfo field = typeof(NovelReaderWindow).GetField(
+                fieldName,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(field, Is.Not.Null);
+            Assert.That(field.IsDefined(typeof(UnityEngine.SerializeField), false), Is.True);
+        }
     }
 }
