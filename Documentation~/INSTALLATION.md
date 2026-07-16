@@ -10,7 +10,7 @@ The toggle script changes only the package entry in `Packages/manifest.json`. Un
 
 ## Release package
 
-Download `UnityNovelReader-0.2.4.unitypackage` from the [latest GitHub release](https://github.com/yyyyyp233/UnityNovelReader/releases/latest), then drag it into Unity or use **Assets > Import Package > Custom Package...**.
+Download `UnityNovelReader-1.0.0.unitypackage` from the [latest GitHub release](https://github.com/yyyyyp233/UnityNovelReader/releases/latest), then drag it into Unity or use **Assets > Import Package > Custom Package...**.
 
 If upgrading from an older source-based `.unitypackage`, delete the old `Assets/UnityNovelReader` directory before importing the current release. This prevents the old sources and new DLL from being compiled together.
 
@@ -19,7 +19,7 @@ If upgrading from an older source-based `.unitypackage`, delete the old `Assets/
 Use this Git URL with Package Manager:
 
 ```text
-https://github.com/yyyyyp233/UnityNovelReader.git#v0.2.4
+https://github.com/yyyyyp233/UnityNovelReader.git#v1.0.0
 ```
 
 ## Traditional `.unitypackage`

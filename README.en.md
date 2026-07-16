@@ -10,9 +10,7 @@ The reader supports paging, chapters, bookmarks, progress persistence, and confi
 
 Books, reading progress, and bookmarks stay outside the Unity project. The tool can be removed without losing reading data or leaving source files in the project.
 
-## Recent changes on `main`
-
-The changes below are available on the current `main` branch. The `v0.2.4` tag still points to the earlier release; use the `main` sources or build a local `.unitypackage` to use these changes.
+## v1.0.0
 
 - The boss key and disguise key now have separate roles. The boss key hides the reader and switches to a selected window; in Console mode the disguise key only swaps novel text for matching log details, while in Classic mode it acts like the boss key.
 - The boss key first selects another tab in the same Dock so restoring the reader keeps its original layout. It closes the window only when no suitable sibling tab is available.
@@ -59,7 +57,7 @@ This mode changes presentation only. Original text, whitespace, offsets, reading
 
 ### Drag-and-drop release (recommended)
 
-1. Download `UnityNovelReader-0.2.4.unitypackage` from the [latest release](https://github.com/yyyyyp233/UnityNovelReader/releases/latest).
+1. Download `UnityNovelReader-1.0.0.unitypackage` from the [latest release](https://github.com/yyyyyp233/UnityNovelReader/releases/latest).
 2. Drag the file into Unity or use **Assets > Import Package > Custom Package...**.
 3. Keep both listed files selected and import them.
 
@@ -70,7 +68,7 @@ This installs only `Assets/UnityNovelReader.Editor.dll` and its `.meta`. If upgr
 In **Window > Package Manager**, choose **+ > Add package from git URL...** and enter:
 
 ```text
-https://github.com/yyyyyp233/UnityNovelReader.git#v0.2.4
+https://github.com/yyyyyp233/UnityNovelReader.git#v1.0.0
 ```
 
 ### From a local clone
@@ -153,7 +151,7 @@ See [Privacy](Documentation~/PRIVACY.md) and [Installation details](Documentatio
 
 ## Development
 
-The package targets Unity 2020.3 or newer. EditMode tests are under `Tests/Editor`. The current `main` branch passed import and compilation checks plus 59 EditMode tests on Unity `2022.3.62f2`: 58 passed and one was ignored because of its environment condition. A real GB18030 long-form text smoke test detected 1,840 chapters.
+The package targets Unity 2020.3 or newer. EditMode tests are under `Tests/Editor`. `v1.0.0` passed import and compilation checks plus 59 EditMode tests on Unity `2022.3.62f2`: 58 passed and one was ignored because of its environment condition. A real GB18030 long-form text smoke test detected 1,840 chapters.
 
 ## License
 

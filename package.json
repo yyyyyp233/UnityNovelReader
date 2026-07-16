@@ -1,8 +1,8 @@
 {
   "name": "com.unitynovelreader.editor",
-  "version": "0.2.4",
+  "version": "1.0.0",
   "displayName": "Unity Novel Reader",
-  "description": "A local-first TXT novel reader that lives inside the Unity Editor.",
+  "description": "A Console-disguised local TXT novel reader for short breaks inside the Unity Editor.",
   "unity": "2020.3",
   "keywords": [
     "editor",
