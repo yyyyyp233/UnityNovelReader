@@ -13,7 +13,7 @@ Books, reading progress, and bookmarks stay outside the Unity project. The tool 
 The default Console-style mode provides the following behavior:
 
 - The tab title/icon, toolbar, alternating rows, severity icons, search field, and right-side counters use a layout similar to Unity's Console.
-- `Open TXT`, `Prev`, `Next`, `Mark`, and `Editor ▼` provide file, navigation, bookmark, panel, and settings actions.
+- `Prev`, `Next`, and `Mark` provide paging and bookmark actions. `Editor ▼` contains `Open TXT`, the library, panels, settings, and the reader-skin switch.
 - `Clear` hides or restores the current text without changing the page, progress, bookmarks, or scroll position.
 - Right-click any Log row to add a temporary blue position marker. Right-clicking another row moves it, while paging, chapter jumps, or switching books clears it without saving anything.
 - Chapter titles use Error, paragraph starts use Log/Info, and continuation rows use Warning. The severity switches mute or restore both text and matching icons; they do not filter text.
@@ -107,7 +107,7 @@ The toolbar search field searches chapter titles and automatically expands the c
 
 | Action | Control or default shortcut |
 | --- | --- |
-| Open a local book | `Open TXT` |
+| Open a local book | `Editor ▼ > Open TXT` |
 | Previous / next page | Visible `Prev` / `Next` buttons |
 | Hide / restore the visible text | `Clear` |
 | Add a bookmark | `Mark` |
@@ -120,7 +120,7 @@ The toolbar search field searches chapter titles and automatically expands the c
 
 Shortcuts can be changed directly on the reader's Settings page or in Unity's Shortcut Manager.
 
-Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. `Editor ▼ > Classic Reader` restores the original reading layout; its Settings page can switch back to the Console skin. If the selected decoy cannot be opened, the reader falls back to `Scene`.
+Use `Editor ▼ > Boss-key target` to choose `Scene`, `Console`, `Profiler`, `Animator`, or `Project` as the quick-hide target. Console mode exposes `Editor ▼ > Classic Reader`; Classic mode keeps the same `Editor ▼` menu and exposes `Console Reader` for switching back. If the selected decoy cannot be opened, the reader falls back to `Scene`.
 
 ## Privacy and project isolation
 

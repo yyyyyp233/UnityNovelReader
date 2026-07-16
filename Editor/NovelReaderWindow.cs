@@ -435,17 +435,9 @@ namespace UnityNovelReader.Editor
         private void DrawClassicToolbar()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            if (GUILayout.Button("Open TXT", EditorStyles.toolbarButton, GUILayout.Width(72f)))
+            if (GUILayout.Button("Editor", EditorStyles.toolbarDropDown, GUILayout.Width(58f)))
             {
-                OpenNovelFile();
-            }
-
-            using (new EditorGUI.DisabledScope(state == null || state.books == null || state.books.Count == 0))
-            {
-                if (GUILayout.Button("Library ▼", EditorStyles.toolbarButton, GUILayout.Width(75f)))
-                {
-                    ShowLibraryMenu();
-                }
+                ShowReaderMenu();
             }
 
             int nextMainPage = GUILayout.Toolbar(
@@ -494,11 +486,6 @@ namespace UnityNovelReader.Editor
                 ToggleConsoleBuffer();
             }
 
-            if (GUILayout.Button("Open TXT", EditorStyles.toolbarButton, GUILayout.Width(68f)))
-            {
-                OpenNovelFile();
-            }
-
             using (new EditorGUI.DisabledScope(document == null || activeBook == null || activeBook.charOffset <= 0))
             {
                 if (GUILayout.Button(new GUIContent("Prev", "Previous page"), EditorStyles.toolbarButton, GUILayout.Width(40f)))
@@ -525,7 +512,7 @@ namespace UnityNovelReader.Editor
 
             if (GUILayout.Button("Editor", EditorStyles.toolbarDropDown, GUILayout.Width(58f)))
             {
-                ShowConsoleReaderMenu();
+                ShowReaderMenu();
             }
 
             GUILayout.FlexibleSpace();
@@ -574,9 +561,12 @@ namespace UnityNovelReader.Editor
             return new GUIContent(count.ToString(), image, tooltip);
         }
 
-        private void ShowConsoleReaderMenu()
+        private void ShowReaderMenu()
         {
             GenericMenu menu = new GenericMenu();
+            menu.AddItem(new GUIContent("Open TXT"), false, OpenNovelFile);
+            AddLibraryMenuItems(menu, "Library/");
+            menu.AddSeparator(string.Empty);
             if (document != null && activeBook != null)
             {
                 if (activeBook.charOffset > 0)
@@ -619,7 +609,6 @@ namespace UnityNovelReader.Editor
                 sidebarTab = 1;
                 SetSidebarVisible(!wasVisible);
             });
-            menu.AddItem(new GUIContent("Library"), false, ShowLibraryMenu);
             menu.AddSeparator(string.Empty);
             menu.AddItem(new GUIContent("Settings"), mainPage == 1, delegate
             {
@@ -636,7 +625,14 @@ namespace UnityNovelReader.Editor
                 new GUIContent("Synthetic Headers"),
                 state.preferences.simulateConsoleHeaders,
                 delegate { SetSimulateConsoleHeaders(!state.preferences.simulateConsoleHeaders); });
-            menu.AddItem(new GUIContent("Classic Reader"), false, delegate { SetReaderAppearance(ReaderAppearance.Classic); });
+            ReaderAppearance targetAppearance = GetAlternateReaderAppearance(state.preferences.appearance);
+            string appearanceLabel = targetAppearance == ReaderAppearance.Console
+                ? "Console Reader"
+                : "Classic Reader";
+            menu.AddItem(
+                new GUIContent(appearanceLabel),
+                false,
+                delegate { SetReaderAppearance(targetAppearance); });
             menu.AddItem(new GUIContent("Open Data Folder"), false, OpenDataFolderMenu);
             menu.AddSeparator("Boss-key target/");
             AddDecoyMenuItem(menu, DecoyWindowTarget.Scene);
@@ -2019,32 +2015,58 @@ namespace UnityNovelReader.Editor
             return resetScroll ? Vector2.zero : currentScroll;
         }
 
-        private void ShowLibraryMenu()
+        private void AddLibraryMenuItems(GenericMenu menu, string prefix)
         {
-            GenericMenu menu = new GenericMenu();
-            for (int i = 0; i < state.books.Count; i++)
+            bool addedBook = false;
+            if (state != null && state.books != null)
             {
-                BookState capturedBook = state.books[i];
-                if (capturedBook == null || string.IsNullOrEmpty(capturedBook.filePath))
+                for (int i = 0; i < state.books.Count; i++)
                 {
-                    continue;
-                }
+                    BookState capturedBook = state.books[i];
+                    if (capturedBook == null || string.IsNullOrEmpty(capturedBook.filePath))
+                    {
+                        continue;
+                    }
 
-                bool selected = activeBook != null && activeBook.id == capturedBook.id;
-                string label = string.IsNullOrEmpty(capturedBook.title) ? capturedBook.filePath : capturedBook.title;
-                if (File.Exists(capturedBook.filePath))
-                {
-                    menu.AddItem(new GUIContent(label), selected, delegate { TryLoadBook(capturedBook.filePath, true); });
-                }
-                else
-                {
-                    menu.AddDisabledItem(new GUIContent(label + " (missing)"), selected);
+                    addedBook = true;
+                    bool selected = activeBook != null && activeBook.id == capturedBook.id;
+                    string label = string.IsNullOrEmpty(capturedBook.title)
+                        ? capturedBook.filePath
+                        : capturedBook.title;
+                    string menuPath = prefix + EscapeGenericMenuLabel(label);
+                    if (File.Exists(capturedBook.filePath))
+                    {
+                        menu.AddItem(
+                            new GUIContent(menuPath),
+                            selected,
+                            delegate { TryLoadBook(capturedBook.filePath, true); });
+                    }
+                    else
+                    {
+                        menu.AddDisabledItem(new GUIContent(menuPath + " (missing)"), selected);
+                    }
                 }
             }
 
-            menu.AddSeparator(string.Empty);
-            menu.AddItem(new GUIContent("Open another file..."), false, OpenNovelFile);
-            menu.ShowAsContext();
+            if (!addedBook)
+            {
+                menu.AddDisabledItem(new GUIContent(prefix + "No books"));
+            }
+
+            menu.AddSeparator(prefix);
+            menu.AddItem(new GUIContent(prefix + "Open another file..."), false, OpenNovelFile);
+        }
+
+        internal static string EscapeGenericMenuLabel(string label)
+        {
+            return string.IsNullOrEmpty(label) ? string.Empty : label.Replace("/", "／");
+        }
+
+        internal static ReaderAppearance GetAlternateReaderAppearance(ReaderAppearance appearance)
+        {
+            return appearance == ReaderAppearance.Console
+                ? ReaderAppearance.Classic
+                : ReaderAppearance.Console;
         }
 
         private BookState FindBook(string id)

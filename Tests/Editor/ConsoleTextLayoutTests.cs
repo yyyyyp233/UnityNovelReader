@@ -207,6 +207,25 @@ namespace UnityNovelReader.Editor.Tests
         }
 
         [Test]
+        public void EscapeGenericMenuLabel_KeepsBookInsideLibrarySubmenu()
+        {
+            Assert.That(
+                NovelReaderWindow.EscapeGenericMenuLabel("Volume 1/Chapter 2"),
+                Is.EqualTo("Volume 1／Chapter 2"));
+        }
+
+        [Test]
+        public void GetAlternateReaderAppearance_SwitchesBothDirections()
+        {
+            Assert.That(
+                NovelReaderWindow.GetAlternateReaderAppearance(ReaderAppearance.Console),
+                Is.EqualTo(ReaderAppearance.Classic));
+            Assert.That(
+                NovelReaderWindow.GetAlternateReaderAppearance(ReaderAppearance.Classic),
+                Is.EqualTo(ReaderAppearance.Console));
+        }
+
+        [Test]
         public void GetSyntheticHeaderTimestamp_UsesStableSourceOffset()
         {
             var anchor = new System.DateTime(2026, 7, 16, 14, 20, 30);
