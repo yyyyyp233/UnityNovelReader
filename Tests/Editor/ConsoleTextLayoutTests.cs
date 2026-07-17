@@ -297,6 +297,27 @@ namespace UnityNovelReader.Editor.Tests
                 Is.EqualTo(expected));
         }
 
+        [TestCase(false, true, true, true, false)]
+        [TestCase(true, false, true, true, true)]
+        [TestCase(true, true, false, true, false)]
+        [TestCase(true, true, false, false, true)]
+        [TestCase(true, false, false, false, false)]
+        public void ResolvePointerInsideWindow_PreservesEventStateWhenUnityHoverIsUnavailable(
+            bool applicationFocused,
+            bool currentPointerInside,
+            bool mouseOverReader,
+            bool hasMouseOverWindow,
+            bool expected)
+        {
+            Assert.That(
+                NovelReaderWindow.ResolvePointerInsideWindow(
+                    applicationFocused,
+                    currentPointerInside,
+                    mouseOverReader,
+                    hasMouseOverWindow),
+                Is.EqualTo(expected));
+        }
+
         [TestCase(false, false, false, false)]
         [TestCase(false, false, true, true)]
         [TestCase(true, false, true, false)]

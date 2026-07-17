@@ -122,7 +122,7 @@ The toolbar search field searches chapter titles and automatically expands the c
 
 `Editor ▼ > Settings` switches the current reader window to its lightweight Settings page. Shortcut bindings, Console appearance, optional synthetic headers, and the boss-key target can all be changed there without opening another plugin window. Shortcut bindings are stored by Unity's user-level Shortcut Manager rather than in the project.
 
-`Strong hover disguise` is disabled by default. When enabled, the selected Reader or Settings appears while the pointer is inside the window. Leaving the window or unfocusing Unity replaces the title, toolbar, and content with Console presentation, forced synthetic headers, and matching log details. The disguise view does not expose the sidebar, chapter search text, `Clear` state, or normal reading scroll. The disguise key is temporarily ignored while this mode is enabled; the boss key keeps its existing behavior.
+`Strong hover disguise` is disabled by default. When enabled, the selected Reader or Settings appears while the pointer is inside the window or the reader is selected again. Leaving the window or unfocusing Unity replaces the title, toolbar, and content with Console presentation, forced synthetic headers, and matching log details. The disguise view does not expose the sidebar, chapter search text, `Clear` state, or normal reading scroll. The disguise key is temporarily ignored while this mode is enabled; the boss key keeps its existing behavior. It can always be disabled from `Editor ▼ > Strong Hover Disguise`; if the window state is abnormal, use Unity's top menu `Tools > Unity Novel Reader > Disable Strong Hover Disguise` as the recovery path.
 
 | Action | Control or default shortcut |
 | --- | --- |
@@ -153,7 +153,7 @@ See [Privacy](Documentation~/PRIVACY.md) and [Installation details](Documentatio
 
 ## Development
 
-The package targets Unity 2020.3 or newer. EditMode tests are under `Tests/Editor`. `v1.0.0` passed import and compilation checks plus 59 EditMode tests on Unity `2022.3.62f2`: 58 passed and one was ignored because of its environment condition. A real GB18030 long-form text smoke test detected 1,840 chapters.
+The package targets Unity 2020.3 or newer. EditMode tests are under `Tests/Editor`. The current version passed import and compilation checks plus 64 EditMode tests on Unity `2022.3.62f2`: 63 passed and one was ignored because of its environment condition. A real GB18030 long-form text smoke test detected 1,840 chapters.
 
 ## License
 

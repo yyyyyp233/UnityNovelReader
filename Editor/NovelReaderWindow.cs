@@ -220,6 +220,29 @@ namespace UnityNovelReader.Editor
             return window;
         }
 
+        [MenuItem("Tools/Unity Novel Reader/Disable Strong Hover Disguise", false, 2101)]
+        private static void DisableStrongHoverDisguiseMenu()
+        {
+            NovelReaderWindow existing = FindOpenWindow();
+            if (existing == null)
+            {
+                return;
+            }
+
+            existing.SetStrongHoverDisguise(false);
+            existing.shortcutHidden = false;
+            existing.Show();
+            existing.Focus();
+            existing.Repaint();
+        }
+
+        [MenuItem("Tools/Unity Novel Reader/Disable Strong Hover Disguise", true)]
+        private static bool CanDisableStrongHoverDisguiseMenu()
+        {
+            NovelReaderWindow existing = FindOpenWindow();
+            return existing != null && existing.IsStrongDisguiseEnabled();
+        }
+
         [MenuItem("Tools/Unity Novel Reader/Open Data Folder", false, 2102)]
         private static void OpenDataFolderMenu()
         {
@@ -395,6 +418,7 @@ namespace UnityNovelReader.Editor
         private void OnFocus()
         {
             shortcutHidden = false;
+            SetPointerInsideWindow(true);
         }
 
         private void OnGUI()
@@ -605,7 +629,10 @@ namespace UnityNovelReader.Editor
                 return;
             }
 
-            if (currentEvent.type == EventType.MouseEnterWindow)
+            if (currentEvent.type == EventType.MouseEnterWindow
+                || currentEvent.type == EventType.MouseMove
+                || currentEvent.type == EventType.MouseDrag
+                || currentEvent.type == EventType.MouseDown)
             {
                 SetPointerInsideWindow(Application.isFocused);
             }
@@ -617,7 +644,31 @@ namespace UnityNovelReader.Editor
 
         private void UpdateStrongDisguiseHover()
         {
-            SetPointerInsideWindow(Application.isFocused && mouseOverWindow == this);
+            EditorWindow hoveredWindow = mouseOverWindow;
+            SetPointerInsideWindow(ResolvePointerInsideWindow(
+                Application.isFocused,
+                pointerInsideWindow,
+                hoveredWindow == this,
+                hoveredWindow != null));
+        }
+
+        internal static bool ResolvePointerInsideWindow(
+            bool applicationFocused,
+            bool currentPointerInside,
+            bool mouseOverReader,
+            bool hasMouseOverWindow)
+        {
+            if (!applicationFocused)
+            {
+                return false;
+            }
+
+            if (mouseOverReader)
+            {
+                return true;
+            }
+
+            return hasMouseOverWindow ? false : currentPointerInside;
         }
 
         private void SetPointerInsideWindow(bool inside)
@@ -874,6 +925,10 @@ namespace UnityNovelReader.Editor
 
                 Repaint();
             });
+            menu.AddItem(
+                new GUIContent("Strong Hover Disguise"),
+                state.preferences.strongHoverDisguise,
+                delegate { SetStrongHoverDisguise(!state.preferences.strongHoverDisguise); });
             menu.AddItem(
                 new GUIContent("Synthetic Headers"),
                 state.preferences.simulateConsoleHeaders,
